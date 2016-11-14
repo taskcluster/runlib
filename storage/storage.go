@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/contester/runlib/contester_proto"
+	"github.com/taskcluster/runlib/contester_proto"
 )
 
 type Backend interface {

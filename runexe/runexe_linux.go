@@ -3,9 +3,9 @@ package main
 import (
 	"strings"
 
-	"github.com/contester/runlib/linux"
-	"github.com/contester/runlib/platform"
-	"github.com/contester/runlib/subprocess"
+	"github.com/taskcluster/runlib/linux"
+	"github.com/taskcluster/runlib/platform"
+	"github.com/taskcluster/runlib/subprocess"
 )
 
 func CreateDesktopIfNeeded(program, interactor *ProcessConfig) (*platform.ContesterDesktop, error) {

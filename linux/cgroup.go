@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/contester/runlib/tools"
+	"github.com/taskcluster/runlib/tools"
 )
 
 type Cgroups struct {

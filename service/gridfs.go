@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/contester/runlib/contester_proto"
-	"github.com/contester/runlib/tools"
+	"github.com/taskcluster/runlib/contester_proto"
+	"github.com/taskcluster/runlib/tools"
 )
 
 func (s *Contester) GridfsCopy(request *contester_proto.CopyOperations, response *contester_proto.FileStats) error {

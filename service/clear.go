@@ -7,8 +7,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/contester/runlib/contester_proto"
-	"github.com/contester/runlib/tools"
+	"github.com/taskcluster/runlib/contester_proto"
+	"github.com/taskcluster/runlib/tools"
 )
 
 func tryClearPath(path string) (bool, error) {

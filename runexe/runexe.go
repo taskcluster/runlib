@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/contester/runlib/platform"
-	"github.com/contester/runlib/subprocess"
+	"github.com/taskcluster/runlib/platform"
+	"github.com/taskcluster/runlib/subprocess"
 )
 
 var version string

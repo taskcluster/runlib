@@ -13,7 +13,7 @@ import (
 
 	"io/ioutil"
 
-	"github.com/contester/runlib/storage"
+	"github.com/taskcluster/runlib/storage"
 )
 
 func readFirstLine(filename string) (string, error) {

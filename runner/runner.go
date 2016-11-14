@@ -9,8 +9,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/contester/rpc4/rpc4go"
-	"github.com/contester/runlib/platform"
-	"github.com/contester/runlib/service"
+	"github.com/taskcluster/runlib/platform"
+	"github.com/taskcluster/runlib/service"
 )
 
 func main() {

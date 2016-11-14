@@ -9,8 +9,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/contester/runlib/linux"
-	"github.com/contester/runlib/tools"
+	"github.com/taskcluster/runlib/linux"
+	"github.com/taskcluster/runlib/tools"
 )
 
 type LoginInfo struct {

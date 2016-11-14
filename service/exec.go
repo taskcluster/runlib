@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/contester/runlib/contester_proto"
-	"github.com/contester/runlib/subprocess"
+	"github.com/taskcluster/runlib/contester_proto"
+	"github.com/taskcluster/runlib/subprocess"
 	"github.com/golang/protobuf/proto"
 )
 

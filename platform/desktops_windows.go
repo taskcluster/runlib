@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/contester/runlib/win32"
+	"github.com/taskcluster/runlib/win32"
 )
 
 type ContesterDesktop struct {

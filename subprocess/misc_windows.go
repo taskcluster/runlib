@@ -6,8 +6,8 @@ import (
 	"unsafe"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/contester/runlib/tools"
-	"github.com/contester/runlib/win32"
+	"github.com/taskcluster/runlib/tools"
+	"github.com/taskcluster/runlib/win32"
 )
 
 // Loads user profile, using handle and username.

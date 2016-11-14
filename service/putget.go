@@ -3,8 +3,8 @@ package service
 import (
 	"os"
 
-	"github.com/contester/runlib/contester_proto"
-	"github.com/contester/runlib/tools"
+	"github.com/taskcluster/runlib/contester_proto"
+	"github.com/taskcluster/runlib/tools"
 )
 
 func (s *Contester) Put(request *contester_proto.FileBlob, response *contester_proto.FileStat) error {

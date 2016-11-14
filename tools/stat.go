@@ -3,7 +3,7 @@ package tools
 import (
 	"os"
 
-	"github.com/contester/runlib/contester_proto"
+	"github.com/taskcluster/runlib/contester_proto"
 	"github.com/golang/protobuf/proto"
 )
 
