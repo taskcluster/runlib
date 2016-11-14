@@ -137,7 +137,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	si.Flags = win32.STARTF_FORCEOFFFEEDBACK | syscall.STARTF_USESHOWWINDOW
 	si.ShowWindow = syscall.SW_SHOWMINNOACTIVE
 
-	useCreateProcessWithLogonW := sub.NoJob || win32.IsWindows8OrGreater()
+	useCreateProcessWithLogonW := !sub.NoJob || win32.IsWindows8OrGreater()
 
 	if !useCreateProcessWithLogonW && sub.Options != nil && sub.Options.Desktop != "" {
 		si.Desktop = syscall.StringToUTF16Ptr(sub.Options.Desktop)
