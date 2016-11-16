@@ -2,17 +2,17 @@ package win32
 
 import (
 	"os"
+	"runtime"
 	"syscall"
 	"unsafe"
-	"runtime"
 )
 
 var (
-	advapi32 = syscall.NewLazyDLL("advapi32.dll")
-	kernel32 = syscall.NewLazyDLL("kernel32.dll")
-	psapi    = syscall.NewLazyDLL("psapi.dll")
-	userenv  = syscall.NewLazyDLL("userenv.dll")
-	user32   = syscall.NewLazyDLL("user32.dll")
+	advapi32 = NewLazyDLL("advapi32.dll")
+	kernel32 = NewLazyDLL("kernel32.dll")
+	psapi    = NewLazyDLL("psapi.dll")
+	userenv  = NewLazyDLL("userenv.dll")
+	user32   = NewLazyDLL("user32.dll")
 
 	procCreateProcessWithLogonW   = advapi32.NewProc("CreateProcessWithLogonW")
 	procCreateProcessAsUserW      = advapi32.NewProc("CreateProcessAsUserW")
