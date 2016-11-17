@@ -29,5 +29,7 @@ func (l *LazyDLLWrapper) NewProc(name string) *LazyProcWrapper {
 
 func (p *LazyProcWrapper) Call(a ...uintptr) (r1, r2 uintptr, lastErr error) {
 	log.Printf("Making system call %v with args: %X", p.LazyProc.Name, a)
-	return p.LazyProc.Call(a...)
+	r1, r2, lastErr = p.LazyProc.Call(a...)
+	log.Printf("  Result: %X", r1)
+	return
 }
