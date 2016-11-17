@@ -225,6 +225,13 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	d.platformData.hThread = pi.Thread
 	d.platformData.hJob = syscall.InvalidHandle
 
+	// Set process to run with maximum priority!
+	e = win32.SetPriorityClass(d.platformData.hProcess, win32.REALTIME_PRIORITY_CLASS)
+	if e != nil {
+		d.platformData.terminateAndClose()
+		return nil, ec.NewError(e, "SetPriorityClass")
+	}
+
 	for _, dll := range sub.Options.InjectDLL {
 		if e = InjectDll(d, sub.Options.LoadLibraryW, dll); e != nil {
 			break
