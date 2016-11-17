@@ -5,8 +5,22 @@ import (
 )
 
 var (
-	procCloseDesktop = user32.NewProc("CloseDesktop")
+	procCloseDesktop  = user32.NewProc("CloseDesktop")
+	procSwitchDesktop = user32.NewProc("SwitchDesktop")
 )
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/ms686347(v=vs.85).aspx
+func SwitchDesktop(
+	hDesktop Hdesk, // HDESK
+) (err error) {
+	r1, _, e1 := procSwitchDesktop.Call(
+		uintptr(hDesktop),
+	)
+	if r1 == 0 {
+		err = os.NewSyscallError("SwitchDesktop", e1)
+	}
+	return
+}
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms682024(v=vs.85).aspx
 func CloseDesktop(
