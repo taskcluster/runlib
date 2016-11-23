@@ -119,5 +119,5 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 		}
 		fmt.Printf("%v: %X\n", len, *x)
 	}
-	return nil, nil
+	return ListToEnvironmentBlock(env), nil
 }
