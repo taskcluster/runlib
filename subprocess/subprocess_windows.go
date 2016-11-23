@@ -154,7 +154,10 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 
 	applicationName := win32.StringPtrToUTF16Ptr(sub.Cmd.ApplicationName)
 	commandLine := win32.StringPtrToUTF16Ptr(sub.Cmd.CommandLine)
-	environment := win32.ListToEnvironmentBlock(sub.Environment)
+	environment, e := win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
+	if e != nil {
+		return nil, e
+	}
 	currentDirectory := win32.StringPtrToUTF16Ptr(sub.CurrentDirectory)
 
 	var syscallName string
