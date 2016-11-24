@@ -3,7 +3,9 @@ package win32
 import (
 	"fmt"
 	"os"
+	"strings"
 	"syscall"
+	"unicode/utf8"
 	"unsafe"
 )
 
@@ -79,7 +81,7 @@ func CreateEnvironmentBlock(
 		inherit = 1
 	}
 	r1, _, e1 := procCreateEnvironmentBlock.Call(
-		uintptr(unsafe.Pointer(&lpEnvironment)),
+		uintptr(unsafe.Pointer(lpEnvironment)),
 		uintptr(hToken),
 		uintptr(inherit),
 	)
@@ -112,12 +114,44 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 		return
 	}
 	defer DestroyEnvironmentBlock(&logonEnv)
-	for len := 0; len < 10000; len++ {
-		x := (*uint32)(unsafe.Pointer(logonEnv + uintptr(len)))
-		if *x == 0 {
+	var varStartOffset uint
+	envList := &[]string{}
+	for {
+		envVar := syscall.UTF16ToString((*[1 << 15]uint16)(unsafe.Pointer(logonEnv + uintptr(varStartOffset)))[:])
+		if envVar == "" {
 			break
 		}
-		fmt.Printf("%v: %X\n", len, *x)
+		*envList = append(*envList, envVar)
+		// in UTF16, each rune takes two bytes, as does the trailing uint16(0)
+		varStartOffset += uint(2 * (utf8.RuneCountInString(envVar) + 1))
+	}
+	env, err = MergeEnvLists(envList, env)
+	if err != nil {
+		return
 	}
 	return ListToEnvironmentBlock(env), nil
+}
+
+func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
+	mergedEnv := &[]string{}
+	mergedEnvMap := map[string]string{}
+	for _, envList := range envLists {
+		if envList == nil {
+			continue
+		}
+		for _, envSetting := range *envList {
+			if utf8.RuneCountInString(envSetting) > 32767 {
+				return nil, fmt.Errorf("Env setting is more than 32767 runes: %v", envSetting)
+			}
+			spl := strings.SplitN(envSetting, "=", 2)
+			if len(spl) != 2 {
+				return nil, fmt.Errorf("Could not interpret string %q as `key=value`", envSetting)
+			}
+			mergedEnvMap[spl[0]] = spl[1]
+		}
+	}
+	for k, v := range mergedEnvMap {
+		*mergedEnv = append(*mergedEnv, k+"="+v)
+	}
+	return mergedEnv, nil
 }
