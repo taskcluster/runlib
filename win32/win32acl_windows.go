@@ -5,8 +5,9 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/taskcluster/runlib/tools"
 	"runtime"
+
+	"github.com/taskcluster/runlib/tools"
 )
 
 var (
