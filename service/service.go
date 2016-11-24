@@ -8,11 +8,11 @@ import (
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/golang/protobuf/proto"
 	"github.com/taskcluster/runlib/contester_proto"
 	"github.com/taskcluster/runlib/platform"
 	"github.com/taskcluster/runlib/storage"
 	"github.com/taskcluster/runlib/subprocess"
-	"github.com/golang/protobuf/proto"
 	"gopkg.in/gcfg.v1"
 )
 
