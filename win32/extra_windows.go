@@ -96,7 +96,7 @@ func DestroyEnvironmentBlock(
 	lpEnvironment *uintptr, // LPVOID
 ) (err error) {
 	r1, _, e1 := procDestroyEnvironmentBlock.Call(
-		uintptr(unsafe.Pointer(&lpEnvironment)),
+		uintptr(unsafe.Pointer(lpEnvironment)),
 	)
 	if r1 == 0 {
 		err = os.NewSyscallError("DestroyEnvironmentBlock", e1)
