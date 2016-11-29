@@ -72,7 +72,7 @@ func SetPriorityClass(
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb762270(v=vs.85).aspx
 func CreateEnvironmentBlock(
-	lpEnvironment *uintptr, // LPVOID
+	lpEnvironment *uintptr, // LPVOID*
 	hToken syscall.Handle, // HANDLE
 	bInherit bool, // BOOL
 ) (err error) {
@@ -93,7 +93,7 @@ func CreateEnvironmentBlock(
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb762274(v=vs.85).aspx
 func DestroyEnvironmentBlock(
-	lpEnvironment *uintptr, // LPVOID
+	lpEnvironment uintptr, // LPVOID - beware - unlike LPVOID* in CreateEnvironmentBlock!
 ) (err error) {
 	r1, _, e1 := procDestroyEnvironmentBlock.Call(
 		uintptr(unsafe.Pointer(lpEnvironment)),
@@ -113,7 +113,7 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 	if err != nil {
 		return
 	}
-	defer DestroyEnvironmentBlock(&logonEnv)
+	defer DestroyEnvironmentBlock(logonEnv)
 	var varStartOffset uint
 	envList := &[]string{}
 	for {
