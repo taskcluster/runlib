@@ -229,7 +229,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	d.platformData.hJob = syscall.InvalidHandle
 
 	// Set process to run with maximum priority!
-	e = win32.SetPriorityClass(d.platformData.hProcess, win32.REALTIME_PRIORITY_CLASS)
+	e = win32.SetPriorityClass(d.platformData.hProcess, win32.ABOVE_NORMAL_PRIORITY_CLASS)
 	if e != nil {
 		d.platformData.terminateAndClose()
 		return nil, ec.NewError(e, "SetPriorityClass")
