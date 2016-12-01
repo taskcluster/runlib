@@ -197,6 +197,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 				pi)
 		}
 	} else {
+		environment := win32.ListToEnvironmentBlock(sub.Environment)
 		syscallName = "CreateProcess"
 		e = syscall.CreateProcess(
 			applicationName,
@@ -206,7 +207,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 			true,
 			win32.CREATE_NEW_PROCESS_GROUP|win32.CREATE_NEW_CONSOLE|win32.CREATE_SUSPENDED|
 				syscall.CREATE_UNICODE_ENVIRONMENT|win32.CREATE_BREAKAWAY_FROM_JOB,
-			sub.Environment,
+			environment,
 			currentDirectory,
 			si,
 			pi)
@@ -228,7 +229,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	d.platformData.hThread = pi.Thread
 	d.platformData.hJob = syscall.InvalidHandle
 
-	// Set process to run with maximum priority!
+	// Set process to run with above normal priority
 	e = win32.SetPriorityClass(d.platformData.hProcess, win32.ABOVE_NORMAL_PRIORITY_CLASS)
 	if e != nil {
 		d.platformData.terminateAndClose()
