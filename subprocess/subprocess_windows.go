@@ -154,10 +154,6 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 
 	applicationName := win32.StringPtrToUTF16Ptr(sub.Cmd.ApplicationName)
 	commandLine := win32.StringPtrToUTF16Ptr(sub.Cmd.CommandLine)
-	environment, e := win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
-	if e != nil {
-		return nil, e
-	}
 	currentDirectory := win32.StringPtrToUTF16Ptr(sub.CurrentDirectory)
 
 	var syscallName string
@@ -166,6 +162,10 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	wSetInherit(si)
 
 	if sub.Login != nil {
+		environment, e := win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
+		if e != nil {
+			return nil, e
+		}
 		if useCreateProcessWithLogonW {
 			syscallName = "CreateProcessWithLogonW"
 			e = win32.CreateProcessWithLogonW(
@@ -206,7 +206,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 			true,
 			win32.CREATE_NEW_PROCESS_GROUP|win32.CREATE_NEW_CONSOLE|win32.CREATE_SUSPENDED|
 				syscall.CREATE_UNICODE_ENVIRONMENT|win32.CREATE_BREAKAWAY_FROM_JOB,
-			environment,
+			sub.Environment,
 			currentDirectory,
 			si,
 			pi)
