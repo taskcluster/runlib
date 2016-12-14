@@ -161,12 +161,11 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	syscall.ForkLock.Lock()
 	wSetInherit(si)
 
-	environment, e := win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
-	if e != nil {
-		return nil, e
-	}
-
 	if sub.Login != nil {
+		environment, e := win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
+		if e != nil {
+			return nil, e
+		}
 		if useCreateProcessWithLogonW {
 			syscallName = "CreateProcessWithLogonW"
 			e = win32.CreateProcessWithLogonW(
@@ -198,6 +197,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 				pi)
 		}
 	} else {
+		environment := win32.ListToEnvironmentBlock(sub.Environment)
 		syscallName = "CreateProcess"
 		e = syscall.CreateProcess(
 			applicationName,
