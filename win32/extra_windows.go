@@ -1,5 +1,9 @@
 package win32
 
+// Refer to
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
+// for understanding the c++ -> go type mappings
+
 import (
 	"fmt"
 	"os"
