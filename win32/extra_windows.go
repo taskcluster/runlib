@@ -304,3 +304,12 @@ func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
 	}
 	return mergedEnv, nil
 }
+
+func SetFolder(hUser syscall.Handle, folder *syscall.GUID, value string) (err error) {
+	var s *uint16
+	s, err = syscall.UTF16PtrFromString(value)
+	if err != nil {
+		return err
+	}
+	return SHSetKnownFolderPath(folder, 0, hUser, s)
+}
