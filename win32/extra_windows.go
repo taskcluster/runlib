@@ -10,11 +10,14 @@ import (
 )
 
 var (
+	shell32 = NewLazyDLL("shell32.dll")
+
 	procCloseDesktop            = user32.NewProc("CloseDesktop")
 	procSwitchDesktop           = user32.NewProc("SwitchDesktop")
 	procSetPriorityClass        = kernel32.NewProc("SetPriorityClass")
 	procCreateEnvironmentBlock  = userenv.NewProc("CreateEnvironmentBlock")
 	procDestroyEnvironmentBlock = userenv.NewProc("DestroyEnvironmentBlock")
+	procSHSetKnownFolderPath    = shell32.NewProc("SHSetKnownFolderPath")
 )
 
 const (
@@ -100,6 +103,25 @@ func DestroyEnvironmentBlock(
 	)
 	if r1 == 0 {
 		err = os.NewSyscallError("DestroyEnvironmentBlock", e1)
+	}
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/bb762249(v=vs.85).aspx
+func SHSetKnownFolderPath(
+	rfid *syscall.GUID, // REFKNOWNFOLDERID
+	dwFlags uint32, // DWORD
+	hToken syscall.Handle, // HANDLE
+	pszPath *uint16, // PCWSTR
+) (err error) {
+	r1, _, _ := procSHSetKnownFolderPath.Call(
+		uintptr(unsafe.Pointer(rfid)),
+		uintptr(dwFlags),
+		uintptr(hToken),
+		uintptr(unsafe.Pointer(pszPath)),
+	)
+	if r1 != 0 {
+		err = syscall.Errno(r1)
 	}
 	return
 }
