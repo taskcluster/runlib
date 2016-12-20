@@ -24,5 +24,5 @@ func ExampleMergeEnvLists() {
 	}
 	fmt.Println(*res)
 	// Output:
-	// hfjdhfd
+	// [a=dog food=good Pete=person x=ray]
 }
