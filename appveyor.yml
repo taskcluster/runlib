@@ -28,6 +28,6 @@ test_script:
   - go tool vet -unsafeptr=false contester_proto platform problemimporter runexe runner storage subprocess tools win32
 
 after_test:
-  - golint ./...
+  - golint platform subprocess win32
 
 deploy: off
