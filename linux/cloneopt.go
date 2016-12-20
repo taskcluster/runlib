@@ -1,6 +1,6 @@
-package linux
-
 // +build linux
+
+package linux
 
 /*
 #cgo linux,386 LDFLAGS: -lpthread -lrt -lcap
