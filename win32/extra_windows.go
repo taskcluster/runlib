@@ -265,7 +265,7 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 	var varStartOffset uint
 	envList := &[]string{}
 	for {
-		envVar := syscall.UTF16ToString((*[1 << 15]uint16)(logonEnv + uintptr(varStartOffset))[:])
+		envVar := syscall.UTF16ToString((*[1 << 15]uint16)(unsafe.Pointer(logonEnv + uintptr(varStartOffset)))[:])
 		if envVar == "" {
 			break
 		}
@@ -387,7 +387,7 @@ func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (valu
 	}
 	// CoTaskMemFree system call has no return value, so can't check for error
 	defer CoTaskMemFree(path)
-	value = syscall.UTF16ToString((*[1 << 16]uint16)(path)[:])
+	value = syscall.UTF16ToString((*[1 << 16]uint16)(unsafe.Pointer(path))[:])
 	return
 }
 
