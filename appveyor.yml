@@ -15,7 +15,7 @@ install:
   - set PATH=C:\go\bin;%GOPATH%\bin;%PATH%
   - go version
   - go env
-  - go get -v -t ./...
+  - go get -v -t github.com/taskcluster/runlib/subprocess github.com/taskcluster/runlib/platform github.com/taskcluster/runlib/win32
   - go get github.com/gordonklaus/ineffassign
   - go get github.com/golang/lint/golint
 
@@ -24,7 +24,7 @@ build: off
 test_script:
   - go vet ./...
   - set GORACE=history_size=7
-  - go test -v -race -timeout 1h ./...
+  - go test -v -race -timeout 1h github.com/taskcluster/runlib/win32
   - ineffassign .
 
 after_test:
