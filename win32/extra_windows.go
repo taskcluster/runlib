@@ -6,7 +6,6 @@ package win32
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"syscall"
@@ -338,12 +337,9 @@ func SHSetKnownFolderPath(
 }
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
-func CoTaskMemFree(pv uintptr) (err error) {
-	r0, _, _ := procCoTaskMemFree.Call(uintptr(pv))
-	if r0 != 0 {
-		err = syscall.Errno(r0)
-	}
-	return
+// Note: the system call returns no value, so we can't check for an error
+func CoTaskMemFree(pv uintptr) {
+	procCoTaskMemFree.Call(uintptr(pv))
 }
 
 func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (value string, err error) {
@@ -352,12 +348,8 @@ func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (valu
 	if err != nil {
 		return
 	}
-	defer func() {
-		freeMemErr := CoTaskMemFree(path)
-		if freeMemErr != nil {
-			log.Fatalf("Could not free memory after system call:\n%v", freeMemErr)
-		}
-	}()
+	// CoTaskMemFree system call has no return value, so can't check for error
+	defer CoTaskMemFree(path)
 	value = syscall.UTF16ToString((*[1 << 16]uint16)(unsafe.Pointer(path))[:])
 	return
 }
