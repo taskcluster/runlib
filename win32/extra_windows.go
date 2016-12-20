@@ -6,6 +6,7 @@ package win32
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"syscall"
@@ -15,6 +16,7 @@ import (
 
 var (
 	shell32 = NewLazyDLL("shell32.dll")
+	ole32   = syscall.NewLazyDLL("ole32.dll")
 
 	procCloseDesktop            = user32.NewProc("CloseDesktop")
 	procSwitchDesktop           = user32.NewProc("SwitchDesktop")
@@ -22,6 +24,8 @@ var (
 	procCreateEnvironmentBlock  = userenv.NewProc("CreateEnvironmentBlock")
 	procDestroyEnvironmentBlock = userenv.NewProc("DestroyEnvironmentBlock")
 	procSHSetKnownFolderPath    = shell32.NewProc("SHSetKnownFolderPath")
+	procSHGetKnownFolderPath    = shell32.NewProc("SHGetKnownFolderPath")
+	procCoTaskMemFree           = ole32.NewProc("CoTaskMemFree")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -147,6 +151,20 @@ var (
 	FOLDERID_Windows                = syscall.GUID{0xF38BF404, 0x1D43, 0x42F2, [8]byte{0x93, 0x05, 0x67, 0xDE, 0x0B, 0x28, 0xFC, 0x23}}
 )
 
+var (
+	KF_FLAG_DEFAULT                     uint32 = 0x00000000
+	KF_FLAG_SIMPLE_IDLIST               uint32 = 0x00000100
+	KF_FLAG_NOT_PARENT_RELATIVE         uint32 = 0x00000200
+	KF_FLAG_DEFAULT_PATH                uint32 = 0x00000400
+	KF_FLAG_INIT                        uint32 = 0x00000800
+	KF_FLAG_NO_ALIAS                    uint32 = 0x00001000
+	KF_FLAG_DONT_UNEXPAND               uint32 = 0x00002000
+	KF_FLAG_DONT_VERIFY                 uint32 = 0x00004000
+	KF_FLAG_CREATE                      uint32 = 0x00008000
+	KF_FLAG_NO_APPCONTAINER_REDIRECTION uint32 = 0x00010000
+	KF_FLAG_ALIAS_ONLY                  uint32 = 0x80000000
+)
+
 const (
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/ms686219(v=vs.85).aspx
 	ABOVE_NORMAL_PRIORITY_CLASS   = 0x00008000
@@ -253,6 +271,15 @@ func SHSetKnownFolderPath(
 	return
 }
 
+// https://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
+func CoTaskMemFree(pv uintptr) (err error) {
+	r0, _, _ := procCoTaskMemFree.Call(uintptr(pv))
+	if r0 != 0 {
+		err = syscall.Errno(r0)
+	}
+	return
+}
+
 // CreateEnvironment returns an environment block, suitable for use with the
 // CreateProcessAsUser system call. The default environment variables of hUser
 // are overlayed with values in env.
@@ -279,6 +306,20 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 		return
 	}
 	return ListToEnvironmentBlock(env), nil
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/bb762188(v=vs.85).aspx
+func SHGetKnownFolderPath(rfid *syscall.GUID, dwFlags uint32, hToken syscall.Handle, pszPath *uintptr) (err error) {
+	r0, _, _ := procSHGetKnownFolderPath.Call(
+		uintptr(unsafe.Pointer(rfid)),
+		uintptr(dwFlags),
+		uintptr(hToken),
+		uintptr(unsafe.Pointer(pszPath)),
+	)
+	if r0 != 0 {
+		err = syscall.Errno(r0)
+	}
+	return
 }
 
 func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
@@ -312,4 +353,29 @@ func SetFolder(hUser syscall.Handle, folder *syscall.GUID, value string) (err er
 		return err
 	}
 	return SHSetKnownFolderPath(folder, 0, hUser, s)
+}
+
+func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (value string, err error) {
+	var path uintptr
+	err = SHGetKnownFolderPath(folder, dwFlags, hUser, &path)
+	if err != nil {
+		return
+	}
+	defer func() {
+		freeMemErr := CoTaskMemFree(path)
+		if freeMemErr != nil {
+			log.Fatalf("Could not free memory after system call")
+		}
+	}()
+	value = syscall.UTF16ToString((*[1 << 16]uint16)(unsafe.Pointer(path))[:])
+	return
+}
+
+func SetAndCreateFolder(hUser syscall.Handle, folder *syscall.GUID, value string) (err error) {
+	err = SetFolder(hUser, folder, value)
+	if err != nil {
+		return
+	}
+	_, err = GetFolder(hUser, folder, KF_FLAG_CREATE)
+	return
 }
