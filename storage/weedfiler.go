@@ -81,7 +81,7 @@ func filerUpload(localName, remoteName, checksum, moduleType, authToken string) 
 	if err != nil {
 		return nil, err
 	}
-	if st.Size != int64(stat.GetSize_()) || (base64sha1 != "" && base64sha1 != st.Digests["SHA"]) {
+	if st.Size != int64(stat.GetSize_()) || base64sha1 != "" && base64sha1 != st.Digests["SHA"] {
 		return nil, fmt.Errorf("upload integrity verification failed")
 	}
 	return stat, nil

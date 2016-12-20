@@ -295,14 +295,14 @@ func CreateJob(s *Subprocess, d *SubprocessData) error {
 
 	if s.RestrictUi {
 		var info win32.JobObjectBasicUiRestrictions
-		info.UIRestrictionClass = (win32.JOB_OBJECT_UILIMIT_DESKTOP |
+		info.UIRestrictionClass = win32.JOB_OBJECT_UILIMIT_DESKTOP |
 			win32.JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
 			win32.JOB_OBJECT_UILIMIT_EXITWINDOWS |
 			win32.JOB_OBJECT_UILIMIT_GLOBALATOMS |
 			win32.JOB_OBJECT_UILIMIT_HANDLES |
 			win32.JOB_OBJECT_UILIMIT_READCLIPBOARD |
 			win32.JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS |
-			win32.JOB_OBJECT_UILIMIT_WRITECLIPBOARD)
+			win32.JOB_OBJECT_UILIMIT_WRITECLIPBOARD
 
 		e = win32.SetJobObjectBasicUiRestrictions(d.platformData.hJob, &info)
 		if e != nil {
@@ -534,7 +534,7 @@ func (sub *Subprocess) BottomHalf(d *SubprocessData, sig chan<- *SubprocessResul
 	}
 
 	sub.SetPostLimits(result)
-	for _ = range d.startAfterStart {
+	for range d.startAfterStart {
 		err := <-d.bufferChan
 		if err != nil {
 			log.Error(err)

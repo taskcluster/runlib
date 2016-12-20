@@ -20,7 +20,7 @@ func unpackConditionMask(cm uint64) (m1, m2 uintptr) {
 }
 
 func packConditionMask(m1, m2 uintptr) uint64 {
-	return uint64(m1) | (uint64(m2) << 32)
+	return uint64(m1) | uint64(m2)<<32
 }
 
 func VerSetConditionMask(lConditionMask uint64, typeBitMask uint32, conditionMask uint8) uint64 {

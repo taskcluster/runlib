@@ -185,7 +185,7 @@ W:
 	result.SuccessCode |= finished.SuccessCode
 	sub.SetPostLimits(result)
 
-	for _ = range d.startAfterStart {
+	for range d.startAfterStart {
 		err := <-d.bufferChan
 		if err != nil {
 			log.Error(err)
