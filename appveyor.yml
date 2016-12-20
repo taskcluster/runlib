@@ -1,0 +1,33 @@
+version: "{build}"
+
+os: Windows Server 2012 R2
+
+clone_folder: c:\gopath\src\github.com\taskcluster\runlib
+
+environment:
+  GOPATH: c:\gopath
+  CGO_ENABLED: 1
+
+install:
+  - rmdir c:\go /s /q
+  - appveyor DownloadFile https://storage.googleapis.com/golang/go1.7.3.windows-amd64.zip
+  - 7z x go1.7.3.windows-amd64.zip -y -oC:\ > NUL
+  - set PATH=C:\go\bin;%GOPATH%\bin;%PATH%
+  - go version
+  - go env
+  - go get -v -t ./...
+  - go get github.com/gordonklaus/ineffassign
+  - go get github.com/golang/lint/golint
+
+build: off
+
+test_script:
+  - go vet ./...
+  - set GORACE=history_size=7
+  - go test -v -race -timeout 1h ./...
+  - ineffassign .
+
+after_test:
+  - golint ./...
+
+deploy: off
