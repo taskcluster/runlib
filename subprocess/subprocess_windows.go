@@ -162,7 +162,8 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	wSetInherit(si)
 
 	if sub.Login != nil {
-		environment, e := win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
+		var environment *uint16
+		environment, e = win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
 		if e != nil {
 			return nil, e
 		}

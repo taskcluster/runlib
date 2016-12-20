@@ -48,7 +48,7 @@ func importProblem(id, root string, backend storage.ProblemStore) error {
 	var err error
 
 	manifest.Id = id
-	manifest.Revision, err = backend.GetNextRevision(id)
+	manifest.Revision, _ = backend.GetNextRevision(id)
 	manifest.Key = manifest.Id + "/" + strconv.FormatInt(int64(manifest.Revision), 10)
 
 	gridprefix := manifest.GetGridPrefix()
@@ -58,7 +58,7 @@ func importProblem(id, root string, backend storage.ProblemStore) error {
 		return err
 	}
 
-	names, err := rootDir.Readdirnames(-1)
+	names, _ := rootDir.Readdirnames(-1)
 
 	for _, shortName := range names {
 		if !strings.HasPrefix(strings.ToLower(shortName), "test.") {
