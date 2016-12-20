@@ -387,7 +387,7 @@ func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (valu
 	}
 	// CoTaskMemFree system call has no return value, so can't check for error
 	defer CoTaskMemFree(path)
-	value = syscall.UTF16ToString((*[1 << 16]uint16)(path)[:])
+	value = syscall.UTF16ToString(*[1 << 16]uint16(path)[:])
 	return
 }
 
