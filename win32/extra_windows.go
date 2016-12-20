@@ -252,34 +252,6 @@ func DestroyEnvironmentBlock(
 	return
 }
 
-// https://msdn.microsoft.com/en-us/library/windows/desktop/bb762249(v=vs.85).aspx
-func SHSetKnownFolderPath(
-	rfid *syscall.GUID, // REFKNOWNFOLDERID
-	dwFlags uint32, // DWORD
-	hToken syscall.Handle, // HANDLE
-	pszPath *uint16, // PCWSTR
-) (err error) {
-	r1, _, _ := procSHSetKnownFolderPath.Call(
-		uintptr(unsafe.Pointer(rfid)),
-		uintptr(dwFlags),
-		uintptr(hToken),
-		uintptr(unsafe.Pointer(pszPath)),
-	)
-	if r1 != 0 {
-		err = syscall.Errno(r1)
-	}
-	return
-}
-
-// https://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
-func CoTaskMemFree(pv uintptr) (err error) {
-	r0, _, _ := procCoTaskMemFree.Call(uintptr(pv))
-	if r0 != 0 {
-		err = syscall.Errno(r0)
-	}
-	return
-}
-
 // CreateEnvironment returns an environment block, suitable for use with the
 // CreateProcessAsUser system call. The default environment variables of hUser
 // are overlayed with values in env.
@@ -308,20 +280,6 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 	return ListToEnvironmentBlock(env), nil
 }
 
-// https://msdn.microsoft.com/en-us/library/windows/desktop/bb762188(v=vs.85).aspx
-func SHGetKnownFolderPath(rfid *syscall.GUID, dwFlags uint32, hToken syscall.Handle, pszPath *uintptr) (err error) {
-	r0, _, _ := procSHGetKnownFolderPath.Call(
-		uintptr(unsafe.Pointer(rfid)),
-		uintptr(dwFlags),
-		uintptr(hToken),
-		uintptr(unsafe.Pointer(pszPath)),
-	)
-	if r0 != 0 {
-		err = syscall.Errno(r0)
-	}
-	return
-}
-
 func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
 	mergedEnv := &[]string{}
 	mergedEnvMap := map[string]string{}
@@ -346,19 +304,51 @@ func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
 	return mergedEnv, nil
 }
 
-func SetFolder(hUser syscall.Handle, folder *syscall.GUID, value string) (err error) {
-	var s *uint16
-	s, err = syscall.UTF16PtrFromString(value)
-	if err != nil {
-		return err
+// https://msdn.microsoft.com/en-us/library/windows/desktop/bb762188(v=vs.85).aspx
+func SHGetKnownFolderPath(rfid *syscall.GUID, dwFlags uint32, hToken syscall.Handle, pszPath *uintptr) (err error) {
+	r0, _, _ := procSHGetKnownFolderPath.Call(
+		uintptr(unsafe.Pointer(rfid)),
+		uintptr(dwFlags),
+		uintptr(hToken),
+		uintptr(unsafe.Pointer(pszPath)),
+	)
+	if r0 != 0 {
+		err = syscall.Errno(r0)
 	}
-	return SHSetKnownFolderPath(folder, 0, hUser, s)
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/bb762249(v=vs.85).aspx
+func SHSetKnownFolderPath(
+	rfid *syscall.GUID, // REFKNOWNFOLDERID
+	dwFlags uint32, // DWORD
+	hToken syscall.Handle, // HANDLE
+	pszPath *uint16, // PCWSTR
+) (err error) {
+	r1, _, _ := procSHSetKnownFolderPath.Call(
+		uintptr(unsafe.Pointer(rfid)),
+		uintptr(dwFlags),
+		uintptr(hToken),
+		uintptr(unsafe.Pointer(pszPath)),
+	)
+	if r1 != 0 {
+		err = syscall.Errno(r1)
+	}
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
+func CoTaskMemFree(pv uintptr) (err error) {
+	r0, _, _ := procCoTaskMemFree.Call(uintptr(pv))
+	if r0 != 0 {
+		err = syscall.Errno(r0)
+	}
+	return
 }
 
 func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (value string, err error) {
 	var path uintptr
 	err = SHGetKnownFolderPath(folder, dwFlags, hUser, &path)
-
 	if err != nil {
 		return
 	}
@@ -370,6 +360,15 @@ func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (valu
 	}()
 	value = syscall.UTF16ToString((*[1 << 16]uint16)(unsafe.Pointer(path))[:])
 	return
+}
+
+func SetFolder(hUser syscall.Handle, folder *syscall.GUID, value string) (err error) {
+	var s *uint16
+	s, err = syscall.UTF16PtrFromString(value)
+	if err != nil {
+		return
+	}
+	return SHSetKnownFolderPath(folder, 0, hUser, s)
 }
 
 func SetAndCreateFolder(hUser syscall.Handle, folder *syscall.GUID, value string) (err error) {
