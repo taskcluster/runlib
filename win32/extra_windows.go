@@ -365,7 +365,7 @@ func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (valu
 	defer func() {
 		freeMemErr := CoTaskMemFree(path)
 		if freeMemErr != nil {
-			log.Fatalf("Could not free memory after system call")
+			log.Fatalf("Could not free memory after system call:\n%v", freeMemErr)
 		}
 	}()
 	value = syscall.UTF16ToString((*[1 << 16]uint16)(unsafe.Pointer(path))[:])
