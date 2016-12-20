@@ -54,8 +54,6 @@ func GetVerdict(r *subprocess.SubprocessResult) Verdict {
 		return TIME_LIMIT_EXCEEDED
 	case r.SuccessCode&(subprocess.EF_MEMORY_LIMIT_HIT|subprocess.EF_MEMORY_LIMIT_HIT_POST) != 0:
 		return MEMORY_LIMIT_EXCEEDED
-	default:
-		return CRASH
 	}
 	return CRASH
 }
