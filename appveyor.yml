@@ -25,7 +25,7 @@ test_script:
   - set GORACE=history_size=7
   - go test -v -race -timeout 1h github.com/taskcluster/runlib/contester_proto github.com/taskcluster/runlib/platform github.com/taskcluster/runlib/problemimporter github.com/taskcluster/runlib/runexe github.com/taskcluster/runlib/runner github.com/taskcluster/runlib/storage github.com/taskcluster/runlib/subprocess github.com/taskcluster/runlib/tools github.com/taskcluster/runlib/win32
   - ineffassign .
-  - go vet github.com/taskcluster/runlib/contester_proto github.com/taskcluster/runlib/platform github.com/taskcluster/runlib/problemimporter github.com/taskcluster/runlib/runexe github.com/taskcluster/runlib/runner github.com/taskcluster/runlib/storage github.com/taskcluster/runlib/subprocess github.com/taskcluster/runlib/tools github.com/taskcluster/runlib/win32
+  - go tool vet -unsafeptr=false contester_proto platform problemimporter runexe runner storage subprocess tools win32
 
 after_test:
   - golint ./...
