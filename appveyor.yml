@@ -22,10 +22,10 @@ install:
 build: off
 
 test_script:
-  - go vet ./...
   - set GORACE=history_size=7
   - go test -v -race -timeout 1h github.com/taskcluster/runlib/win32
   - ineffassign .
+  - go vet ./...
 
 after_test:
   - golint ./...
