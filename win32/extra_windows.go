@@ -303,6 +303,11 @@ func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
 		mergedEnv[i] = k + "=" + v
 		i++
 	}
+	// All strings in the environment block must be sorted alphabetically by
+	// name. The sort is case-insensitive, Unicode order, without regard to
+	// locale.
+	//
+	// See https://msdn.microsoft.com/en-us/library/windows/desktop/ms682009(v=vs.85).aspx
 	sort.Strings(mergedEnv)
 	return &mergedEnv, nil
 }
