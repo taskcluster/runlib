@@ -16,7 +16,7 @@ import (
 
 var (
 	shell32 = NewLazyDLL("shell32.dll")
-	ole32   = syscall.NewLazyDLL("ole32.dll")
+	ole32   = NewLazyDLL("ole32.dll")
 
 	procCloseDesktop            = user32.NewProc("CloseDesktop")
 	procSwitchDesktop           = user32.NewProc("SwitchDesktop")
@@ -358,6 +358,7 @@ func SetFolder(hUser syscall.Handle, folder *syscall.GUID, value string) (err er
 func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (value string, err error) {
 	var path uintptr
 	err = SHGetKnownFolderPath(folder, dwFlags, hUser, &path)
+
 	if err != nil {
 		return
 	}
