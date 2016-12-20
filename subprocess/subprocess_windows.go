@@ -266,7 +266,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 
 				return nil, ec.NewError(e, "CreateJob")
 			}
-			log.Error("CreateFrozen/CreateJob: %s", e)
+			log.Errorf("CreateFrozen/CreateJob: %s", e)
 		} else {
 			e = win32.AssignProcessToJobObject(d.platformData.hJob, d.platformData.hProcess)
 			if e != nil {
@@ -378,7 +378,7 @@ func InjectDll(d *SubprocessData, loadLibraryW uintptr, dll string) error {
 		return ec.NewError(os.NewSyscallError("WaitForSingleObject", err))
 	}
 	if wr != syscall.WAIT_OBJECT_0 {
-		return ec.NewError(fmt.Errorf("Unexpected wait result %s", wr))
+		return ec.NewError(fmt.Errorf("Unexpected wait result %v", wr))
 	}
 
 	return nil
