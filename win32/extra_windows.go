@@ -280,27 +280,48 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 	return ListToEnvironmentBlock(env), nil
 }
 
+type envSetting struct {
+	name  string
+	value string
+}
+
 func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
-	mergedEnvMap := map[string]string{}
+	mergedEnvMap := map[string]envSetting{}
 	for _, envList := range envLists {
 		if envList == nil {
 			continue
 		}
-		for _, envSetting := range *envList {
-			if utf8.RuneCountInString(envSetting) > 32767 {
-				return nil, fmt.Errorf("Env setting is more than 32767 runes: %v", envSetting)
+		for _, env := range *envList {
+			if utf8.RuneCountInString(env) > 32767 {
+				return nil, fmt.Errorf("Env setting is more than 32767 runes: %v", env)
 			}
-			spl := strings.SplitN(envSetting, "=", 2)
+			spl := strings.SplitN(env, "=", 2)
 			if len(spl) != 2 {
-				return nil, fmt.Errorf("Could not interpret string %q as `key=value`", envSetting)
+				return nil, fmt.Errorf("Could not interpret string %q as `key=value`", env)
 			}
-			mergedEnvMap[spl[0]] = spl[1]
+			newVarName := spl[0]
+			newVarValue := spl[1]
+			// if env var already exists, use case of existing name, to simulate behaviour of
+			// setting an existing env var with a different case
+			// e.g.
+			//  set aVar=3
+			//  set AVAR=4
+			// results in
+			//  aVar=4
+			canonicalVarName := strings.ToLower(newVarName)
+			if existingVarName := mergedEnvMap[canonicalVarName].name; existingVarName != "" {
+				newVarName = existingVarName
+			}
+			mergedEnvMap[canonicalVarName] = envSetting{
+				name:  newVarName,
+				value: newVarValue,
+			}
 		}
 	}
-	mergedEnv := make([]string, len(mergedEnvMap))
+	canonicalVarNames := make([]string, len(mergedEnvMap))
 	i := 0
-	for k, v := range mergedEnvMap {
-		mergedEnv[i] = k + "=" + v
+	for k := range mergedEnvMap {
+		canonicalVarNames[i] = k
 		i++
 	}
 	// All strings in the environment block must be sorted alphabetically by
@@ -308,7 +329,14 @@ func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
 	// locale.
 	//
 	// See https://msdn.microsoft.com/en-us/library/windows/desktop/ms682009(v=vs.85).aspx
-	sort.Strings(mergedEnv)
+	sort.Strings(canonicalVarNames)
+	// Finally piece back together into an environment block
+	mergedEnv := make([]string, len(mergedEnvMap))
+	i = 0
+	for _, canonicalVarName := range canonicalVarNames {
+		mergedEnv[i] = mergedEnvMap[canonicalVarName].name + "=" + mergedEnvMap[canonicalVarName].value
+		i++
+	}
 	return &mergedEnv, nil
 }
 
