@@ -7,6 +7,7 @@ package win32
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"syscall"
 	"unicode/utf8"
@@ -280,7 +281,6 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 }
 
 func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
-	mergedEnv := &[]string{}
 	mergedEnvMap := map[string]string{}
 	for _, envList := range envLists {
 		if envList == nil {
@@ -297,10 +297,14 @@ func MergeEnvLists(envLists ...*[]string) (*[]string, error) {
 			mergedEnvMap[spl[0]] = spl[1]
 		}
 	}
+	mergedEnv := make([]string, len(mergedEnvMap))
+	i := 0
 	for k, v := range mergedEnvMap {
-		*mergedEnv = append(*mergedEnv, k+"="+v)
+		mergedEnv[i] = k + "=" + v
+		i++
 	}
-	return mergedEnv, nil
+	sort.Strings(mergedEnv)
+	return &mergedEnv, nil
 }
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb762188(v=vs.85).aspx
