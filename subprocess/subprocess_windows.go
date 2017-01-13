@@ -139,7 +139,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 
 	isWindows8OrGreater := win32.IsWindows8OrGreater()
 	useCreateProcessWithLogonW := !sub.NoJob || isWindows8OrGreater
-	creationFlags := win32.CREATE_SUSPENDED | syscall.CREATE_UNICODE_ENVIRONMENT
+	creationFlags := uint32(win32.CREATE_SUSPENDED | syscall.CREATE_UNICODE_ENVIRONMENT)
 	if !isWindows8OrGreater {
 		creationFlags |= win32.CREATE_BREAKAWAY_FROM_JOB
 	}
