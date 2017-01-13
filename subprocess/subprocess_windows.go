@@ -180,7 +180,8 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 				environment,
 				currentDirectory,
 				si,
-				pi)
+				pi,
+			)
 		} else {
 			syscallName = "CreateProcessAsUser"
 			e = win32.CreateProcessAsUser(
@@ -195,12 +196,13 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 				environment,
 				currentDirectory,
 				si,
-				pi)
+				pi,
+			)
 		}
 	} else {
 		environment := win32.ListToEnvironmentBlock(sub.Environment)
 		syscallName = "CreateProcess"
-		e = syscall.CreateProcess(
+		e = win32.CreateProcess(
 			applicationName,
 			commandLine,
 			nil,
@@ -211,7 +213,8 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 			environment,
 			currentDirectory,
 			si,
-			pi)
+			pi,
+		)
 	}
 
 	closeDescriptors(d.closeAfterStart)

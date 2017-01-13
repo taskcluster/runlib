@@ -14,6 +14,7 @@ var (
 	userenv  = NewLazyDLL("userenv.dll")
 	user32   = NewLazyDLL("user32.dll")
 
+	procCreateProcessW            = advapi32.NewProc("CreateProcessW")
 	procCreateProcessWithLogonW   = advapi32.NewProc("CreateProcessWithLogonW")
 	procCreateProcessAsUserW      = advapi32.NewProc("CreateProcessAsUserW")
 	procResumeThread              = kernel32.NewProc("ResumeThread")
@@ -265,6 +266,43 @@ func CreateProcessAsUser(
 	runtime.KeepAlive(processInformation)
 	if int(r1) == 0 {
 		return os.NewSyscallError("CreateProcessAsUser", e1)
+	}
+	return nil
+}
+
+func CreateProcess(
+	applicationName *uint16,
+	commandLine *uint16,
+	procSecurity *syscall.SecurityAttributes,
+	threadSecurity *syscall.SecurityAttributes,
+	inheritHandles bool,
+	creationFlags uint32,
+	environment *uint16,
+	currentDirectory *uint16,
+	startupInfo *syscall.StartupInfo,
+	processInformation *syscall.ProcessInformation) error {
+
+	r1, _, e1 := procCreateProcessW.Call(
+		uintptr(unsafe.Pointer(applicationName)),
+		uintptr(unsafe.Pointer(commandLine)),
+		uintptr(unsafe.Pointer(procSecurity)),
+		uintptr(unsafe.Pointer(threadSecurity)),
+		uintptr(boolToUint32(inheritHandles)),
+		uintptr(creationFlags),
+		uintptr(unsafe.Pointer(environment)), // env
+		uintptr(unsafe.Pointer(currentDirectory)),
+		uintptr(unsafe.Pointer(startupInfo)),
+		uintptr(unsafe.Pointer(processInformation)))
+	runtime.KeepAlive(applicationName)
+	runtime.KeepAlive(commandLine)
+	runtime.KeepAlive(procSecurity)
+	runtime.KeepAlive(threadSecurity)
+	runtime.KeepAlive(environment)
+	runtime.KeepAlive(currentDirectory)
+	runtime.KeepAlive(startupInfo)
+	runtime.KeepAlive(processInformation)
+	if int(r1) == 0 {
+		return os.NewSyscallError("CreateProcess", e1)
 	}
 	return nil
 }
