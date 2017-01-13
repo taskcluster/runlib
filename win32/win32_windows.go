@@ -14,7 +14,7 @@ var (
 	userenv  = NewLazyDLL("userenv.dll")
 	user32   = NewLazyDLL("user32.dll")
 
-	procCreateProcessW            = advapi32.NewProc("CreateProcessW")
+	procCreateProcessW            = kernel32.NewProc("CreateProcessW")
 	procCreateProcessWithLogonW   = advapi32.NewProc("CreateProcessWithLogonW")
 	procCreateProcessAsUserW      = advapi32.NewProc("CreateProcessAsUserW")
 	procResumeThread              = kernel32.NewProc("ResumeThread")
