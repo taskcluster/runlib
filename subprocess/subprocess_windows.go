@@ -137,7 +137,12 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	si.Flags = win32.STARTF_FORCEOFFFEEDBACK | syscall.STARTF_USESHOWWINDOW
 	si.ShowWindow = syscall.SW_SHOWMINNOACTIVE
 
-	useCreateProcessWithLogonW := !sub.NoJob || win32.IsWindows8OrGreater()
+	isWindows8OrGreater := win32.IsWindows8OrGreater()
+	useCreateProcessWithLogonW := !sub.NoJob || isWindows8OrGreater
+	creationFlags := uint32(win32.CREATE_SUSPENDED | syscall.CREATE_UNICODE_ENVIRONMENT)
+	if !isWindows8OrGreater {
+		creationFlags |= win32.CREATE_BREAKAWAY_FROM_JOB
+	}
 
 	if !useCreateProcessWithLogonW && sub.Options != nil && sub.Options.Desktop != "" {
 		si.Desktop = syscall.StringToUTF16Ptr(sub.Options.Desktop)
@@ -176,7 +181,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 				win32.LOGON_WITH_PROFILE,
 				applicationName,
 				commandLine,
-				win32.CREATE_SUSPENDED|syscall.CREATE_UNICODE_ENVIRONMENT,
+				creationFlags,
 				environment,
 				currentDirectory,
 				si,
@@ -191,8 +196,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 				nil,
 				nil,
 				true,
-				win32.CREATE_NEW_PROCESS_GROUP|win32.CREATE_NEW_CONSOLE|win32.CREATE_SUSPENDED|
-					syscall.CREATE_UNICODE_ENVIRONMENT|win32.CREATE_BREAKAWAY_FROM_JOB,
+				creationFlags|win32.CREATE_NEW_PROCESS_GROUP|win32.CREATE_NEW_CONSOLE,
 				environment,
 				currentDirectory,
 				si,
@@ -208,8 +212,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 			nil,
 			nil,
 			true,
-			win32.CREATE_NEW_PROCESS_GROUP|win32.CREATE_NEW_CONSOLE|win32.CREATE_SUSPENDED|
-				syscall.CREATE_UNICODE_ENVIRONMENT|win32.CREATE_BREAKAWAY_FROM_JOB,
+			creationFlags|win32.CREATE_NEW_PROCESS_GROUP|win32.CREATE_NEW_CONSOLE,
 			environment,
 			currentDirectory,
 			si,
