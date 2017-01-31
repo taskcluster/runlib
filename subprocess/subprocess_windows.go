@@ -124,8 +124,8 @@ func (d *PlatformData) terminateAndClose() (err error) {
 	if err = terminateProcessLoop(d.hProcess); err != nil {
 		return
 	}
-	syscall.CloseHandle(d.hThread)
-	syscall.CloseHandle(d.hProcess)
+	win32.CloseHandle(d.hThread)
+	win32.CloseHandle(d.hProcess)
 	return
 }
 
@@ -278,7 +278,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 			if e != nil {
 				log.Errorf("CreateFrozen/AssignProcessToJobObject: %s, hJob: %d, hProcess: %d, pd: %+v", e,
 					d.platformData.hJob, d.platformData.hProcess, d.platformData)
-				syscall.CloseHandle(d.platformData.hJob)
+				win32.CloseHandle(d.platformData.hJob)
 				d.platformData.hJob = syscall.InvalidHandle
 				if sub.FailOnJobCreationFailure {
 					d.platformData.terminateAndClose()
@@ -378,7 +378,7 @@ func InjectDll(d *SubprocessData, loadLibraryW uintptr, dll string) error {
 	if err != nil {
 		return ec.NewError(err)
 	}
-	defer syscall.CloseHandle(thread)
+	defer win32.CloseHandle(thread)
 	wr, err := syscall.WaitForSingleObject(thread, syscall.INFINITE)
 	if err != nil {
 		return ec.NewError(os.NewSyscallError("WaitForSingleObject", err))
@@ -408,7 +408,7 @@ func (d *SubprocessData) Unfreeze() error {
 		}
 		time.Sleep(time.Second / 10)
 	}
-	syscall.CloseHandle(hThread)
+	win32.CloseHandle(hThread)
 	return nil
 }
 
@@ -535,9 +535,9 @@ func (sub *Subprocess) BottomHalf(d *SubprocessData, sig chan<- *SubprocessResul
 	_ = UpdateProcessTimes(&d.platformData, result, true)
 	UpdateProcessMemory(&d.platformData, result)
 
-	syscall.CloseHandle(hProcess)
+	win32.CloseHandle(hProcess)
 	if hJob != syscall.InvalidHandle {
-		syscall.CloseHandle(hJob)
+		win32.CloseHandle(hJob)
 	}
 
 	sub.SetPostLimits(result)

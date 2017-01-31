@@ -26,6 +26,7 @@ var (
 	procSHSetKnownFolderPath    = shell32.NewProc("SHSetKnownFolderPath")
 	procSHGetKnownFolderPath    = shell32.NewProc("SHGetKnownFolderPath")
 	procCoTaskMemFree           = ole32.NewProc("CoTaskMemFree")
+	procCloseHandle             = kernel32.NewProc("CloseHandle")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -377,6 +378,21 @@ func SHSetKnownFolderPath(
 // Note: the system call returns no value, so we can't check for an error
 func CoTaskMemFree(pv uintptr) {
 	procCoTaskMemFree.Call(uintptr(pv))
+}
+
+func CloseHandle(handle syscall.Handle) (err error) {
+	syscall.CloseHandle(handle)
+	r1, _, e1 := procCloseHandle.Call(
+		uintptr(handle),
+	)
+	if r1 == 0 {
+		if e1 != syscall.Errno(0) {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
 }
 
 func GetFolder(hUser syscall.Handle, folder *syscall.GUID, dwFlags uint32) (value string, err error) {

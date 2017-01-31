@@ -44,7 +44,7 @@ func realLogout(s *LoginInfo) {
 	}
 
 	if s.HUser != syscall.Handle(0) && s.HUser != syscall.InvalidHandle {
-		syscall.CloseHandle(s.HUser)
+		win32.CloseHandle(s.HUser)
 		s.HUser = syscall.InvalidHandle
 	}
 }
@@ -77,7 +77,7 @@ func (s *LoginInfo) Prepare() error {
 	s.HProfile, err = loadProfile(s.HUser, s.Username)
 
 	if err != nil {
-		syscall.CloseHandle(s.HUser)
+		win32.CloseHandle(s.HUser)
 		s.HUser = syscall.InvalidHandle
 		return ec.NewError(err)
 	}
