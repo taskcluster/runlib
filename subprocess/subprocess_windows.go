@@ -408,7 +408,7 @@ func (d *SubprocessData) Unfreeze() error {
 		}
 		time.Sleep(time.Second / 10)
 	}
-	win32.CloseHandle(hThread)
+	// win32.CloseHandle(hThread)
 	return nil
 }
 

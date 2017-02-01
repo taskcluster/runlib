@@ -6,6 +6,7 @@ package win32
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -391,6 +392,7 @@ func CloseHandle(handle syscall.Handle) (err error) {
 		} else {
 			err = syscall.EINVAL
 		}
+		log.Printf("Error when closing handle: %v", err)
 	}
 	return
 }
