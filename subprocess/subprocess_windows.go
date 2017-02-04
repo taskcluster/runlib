@@ -112,6 +112,7 @@ func wSetInherit(si *syscall.StartupInfo) {
 	// TODO: errors
 }
 
+// Terminate process, and wait for it to be signalled
 func terminateProcessLoop(process syscall.Handle) error {
 	for waitResult := uint32(syscall.WAIT_TIMEOUT); waitResult == syscall.WAIT_TIMEOUT; {
 		syscall.TerminateProcess(process, 0)
@@ -120,6 +121,7 @@ func terminateProcessLoop(process syscall.Handle) error {
 	return nil
 }
 
+// Terminate process, and close handles to process and thread
 func (d *PlatformData) terminateAndClose() (err error) {
 	if err = terminateProcessLoop(d.hProcess); err != nil {
 		return

@@ -49,16 +49,15 @@ func CreateContesterDesktop() (winsta win32.Hwinsta, desk win32.Hdesk, name stri
 		return
 	}
 
-	winsta = origWinsta
-	// if winsta, err = win32.CreateWindowStation(
-	// 	syscall.StringToUTF16Ptr(threadIdName("w")), 0, win32.MAXIMUM_ALLOWED, win32.MakeInheritSa()); err != nil {
-	// 	return
-	// }
+	if winsta, err = win32.CreateWindowStation(
+		syscall.StringToUTF16Ptr(threadIdName("w")), 0, win32.MAXIMUM_ALLOWED, win32.MakeInheritSa()); err != nil {
+		return
+	}
 
-	// if err = win32.SetProcessWindowStation(winsta); err != nil {
-	// 	win32.CloseWindowStation(winsta)
-	// 	return
-	// }
+	if err = win32.SetProcessWindowStation(winsta); err != nil {
+		win32.CloseWindowStation(winsta)
+		return
+	}
 
 	var winstaName string
 	if winstaName, err = win32.GetUserObjectName(syscall.Handle(winsta)); err == nil {
