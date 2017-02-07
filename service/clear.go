@@ -7,15 +7,14 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/juju/errors"
 	"github.com/taskcluster/runlib/contester_proto"
-	"github.com/taskcluster/runlib/tools"
 )
 
 func tryClearPath(path string) (bool, error) {
-	ec := tools.ErrorContext("tryClearPath")
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		return false, ec.NewError(err, "ioutil.ReadDir")
+		return false, errors.Annotate(err, "ioutil.ReadDir")
 	}
 
 	if len(files) == 0 {
@@ -29,17 +28,16 @@ func tryClearPath(path string) (bool, error) {
 		fullpath := filepath.Join(path, info.Name())
 		err = os.RemoveAll(fullpath)
 		if err != nil {
-			return true, ec.NewError(err, "os.RemoveAll")
+			return true, errors.Annotate(err, "os.RemoveAll")
 		}
 	}
 	return true, nil
 }
 
 func (s *Contester) Clear(request *contester_proto.ClearSandboxRequest, response *contester_proto.EmptyMessage) error {
-	ec := tools.ErrorContext("Clear")
 	sandbox, err := getSandboxById(s.Sandboxes, request.GetSandbox())
 	if err != nil {
-		return ec.NewError(err, "getSandboxById")
+		return err
 	}
 
 	sandbox.Mutex.Lock()
@@ -56,7 +54,7 @@ func (s *Contester) Clear(request *contester_proto.ClearSandboxRequest, response
 	}
 
 	if err != nil {
-		return ec.NewError(err, "tryClearPath")
+		return err
 	}
 	return nil
 }
