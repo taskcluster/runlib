@@ -201,7 +201,6 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 		}
 	} else {
 		environment := win32.ListToEnvironmentBlock(sub.Environment)
-		syscallName = "CreateProcess"
 		e = os.NewSyscallError("CreateProcess", win32.CreateProcess(
 			applicationName,
 			commandLine,
@@ -238,7 +237,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	e = win32.SetPriorityClass(d.platformData.hProcess, win32.ABOVE_NORMAL_PRIORITY_CLASS)
 	if e != nil {
 		d.platformData.terminateAndClose()
-		return nil, ec.NewError(e, "SetPriorityClass")
+		return nil, e
 	}
 
 	for _, dll := range sub.Options.InjectDLL {
