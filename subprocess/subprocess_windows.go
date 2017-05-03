@@ -146,7 +146,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 		creationFlags |= win32.CREATE_BREAKAWAY_FROM_JOB
 	}
 
-	if sub.Options != nil && sub.Options.Desktop != "" {
+	if !useCreateProcessWithLogonW && sub.Options != nil && sub.Options.Desktop != "" {
 		si.Desktop = syscall.StringToUTF16Ptr(sub.Options.Desktop)
 	}
 
