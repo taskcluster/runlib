@@ -160,6 +160,10 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	syscall.ForkLock.Lock()
 	wSetInherit(si)
 
+	if sub.Options != nil && sub.Options.Desktop != "" {
+		si.Desktop = syscall.StringToUTF16Ptr(sub.Options.Desktop)
+	}
+
 	if sub.Login != nil {
 		var environment *uint16
 		environment, e = win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
@@ -197,10 +201,6 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 		}
 	} else {
 		environment := win32.ListToEnvironmentBlock(sub.Environment)
-
-		if sub.Options != nil && sub.Options.Desktop != "" {
-			si.Desktop = syscall.StringToUTF16Ptr(sub.Options.Desktop)
-		}
 
 		e = os.NewSyscallError("CreateProcess", win32.CreateProcess(
 			applicationName,
