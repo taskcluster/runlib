@@ -146,10 +146,6 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 		creationFlags |= win32.CREATE_BREAKAWAY_FROM_JOB
 	}
 
-	if !useCreateProcessWithLogonW && sub.Options != nil && sub.Options.Desktop != "" {
-		si.Desktop = syscall.StringToUTF16Ptr(sub.Options.Desktop)
-	}
-
 	e := d.wAllRedirects(sub, si)
 	if e != nil {
 		return nil, e
@@ -201,6 +197,11 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 		}
 	} else {
 		environment := win32.ListToEnvironmentBlock(sub.Environment)
+
+		if sub.Options != nil && sub.Options.Desktop != "" {
+			si.Desktop = syscall.StringToUTF16Ptr(sub.Options.Desktop)
+		}
+
 		e = os.NewSyscallError("CreateProcess", win32.CreateProcess(
 			applicationName,
 			commandLine,
