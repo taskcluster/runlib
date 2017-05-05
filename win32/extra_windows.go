@@ -33,6 +33,7 @@ var (
 	procCloseHandle                    = kernel32.NewProc("CloseHandle")
 	procLsaConnectUntrusted            = secur32.NewProc("LsaConnectUntrusted")
 	procLsaLookupAuthenticationPackage = secur32.NewProc("LsaLookupAuthenticationPackage")
+	procAllocateLocallyUniqueId        = advapi32.NewProc("AllocateLocallyUniqueId")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -493,3 +494,26 @@ func LsaLookupAuthenticationPackage(
 	}
 	return
 }
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
+type LUID struct {
+	LowPart  uint32 // DWORD
+	HighPart int32  // LONG
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa375260(v=vs.85).aspx
+func AllocateLocallyUniqueId(
+	luid *LUID, // PLUID
+) (err error) {
+	r, _, _ := procAllocateLocallyUniqueId.Call(
+		uintptr(unsafe.Pointer(luid)),
+	)
+	if r != 0 {
+		err = syscall.Errno(r)
+	}
+	return
+}
+
+// TODO: nice-to-have but not necessary: would make troubleshooting easier
+// https://msdn.microsoft.com/en-us/library/windows/desktop/ms721800(v=vs.85).aspx
+func LsaNtStatusToWinError() {}
