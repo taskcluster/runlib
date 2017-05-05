@@ -508,7 +508,7 @@ func AllocateLocallyUniqueId(
 	r, _, _ := procAllocateLocallyUniqueId.Call(
 		uintptr(unsafe.Pointer(luid)),
 	)
-	if r != 0 {
+	if r == 0 {
 		err = syscall.Errno(r)
 	}
 	return
