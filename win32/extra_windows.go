@@ -18,6 +18,7 @@ import (
 var (
 	shell32 = NewLazyDLL("shell32.dll")
 	ole32   = NewLazyDLL("ole32.dll")
+	secur32 = NewLazyDLL("secur32.dll")
 
 	procCloseDesktop            = user32.NewProc("CloseDesktop")
 	procSwitchDesktop           = user32.NewProc("SwitchDesktop")
@@ -28,6 +29,7 @@ var (
 	procSHGetKnownFolderPath    = shell32.NewProc("SHGetKnownFolderPath")
 	procCoTaskMemFree           = ole32.NewProc("CoTaskMemFree")
 	procCloseHandle             = kernel32.NewProc("CloseHandle")
+	procLsaConnectUntrusted     = secur32.NewProc("LsaConnectUntrusted")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -424,5 +426,18 @@ func SetAndCreateFolder(hUser syscall.Handle, folder *syscall.GUID, value string
 		return
 	}
 	_, err = GetFolder(hUser, folder, KF_FLAG_CREATE)
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378265(v=vs.85).aspx
+func LsaConnectUntrusted(
+	lsaHandle *syscall.Handle, // PHANDLE
+) (err error) {
+	r, _, e := procLsaConnectUntrusted.Call(
+		uintptr(unsafe.Pointer(lsaHandle)),
+	)
+	if r != 0 {
+		err = fmt.Errorf("Got error from LsaConnectUntrusted sys call: 0x%X, see https://msdn.microsoft.com/en-us/library/cc704588.aspx for details: %v", r, e)
+	}
 	return
 }
