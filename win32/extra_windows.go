@@ -13,6 +13,8 @@ import (
 	"syscall"
 	"unicode/utf8"
 	"unsafe"
+
+	"golang.org/x/text/encoding/charmap"
 )
 
 var (
@@ -20,16 +22,17 @@ var (
 	ole32   = NewLazyDLL("ole32.dll")
 	secur32 = NewLazyDLL("secur32.dll")
 
-	procCloseDesktop            = user32.NewProc("CloseDesktop")
-	procSwitchDesktop           = user32.NewProc("SwitchDesktop")
-	procSetPriorityClass        = kernel32.NewProc("SetPriorityClass")
-	procCreateEnvironmentBlock  = userenv.NewProc("CreateEnvironmentBlock")
-	procDestroyEnvironmentBlock = userenv.NewProc("DestroyEnvironmentBlock")
-	procSHSetKnownFolderPath    = shell32.NewProc("SHSetKnownFolderPath")
-	procSHGetKnownFolderPath    = shell32.NewProc("SHGetKnownFolderPath")
-	procCoTaskMemFree           = ole32.NewProc("CoTaskMemFree")
-	procCloseHandle             = kernel32.NewProc("CloseHandle")
-	procLsaConnectUntrusted     = secur32.NewProc("LsaConnectUntrusted")
+	procCloseDesktop                   = user32.NewProc("CloseDesktop")
+	procSwitchDesktop                  = user32.NewProc("SwitchDesktop")
+	procSetPriorityClass               = kernel32.NewProc("SetPriorityClass")
+	procCreateEnvironmentBlock         = userenv.NewProc("CreateEnvironmentBlock")
+	procDestroyEnvironmentBlock        = userenv.NewProc("DestroyEnvironmentBlock")
+	procSHSetKnownFolderPath           = shell32.NewProc("SHSetKnownFolderPath")
+	procSHGetKnownFolderPath           = shell32.NewProc("SHGetKnownFolderPath")
+	procCoTaskMemFree                  = ole32.NewProc("CoTaskMemFree")
+	procCloseHandle                    = kernel32.NewProc("CloseHandle")
+	procLsaConnectUntrusted            = secur32.NewProc("LsaConnectUntrusted")
+	procLsaLookupAuthenticationPackage = secur32.NewProc("LsaLookupAuthenticationPackage")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -438,6 +441,43 @@ func LsaConnectUntrusted(
 	)
 	if r != 0 {
 		err = fmt.Errorf("Got error from LsaConnectUntrusted sys call: 0x%X, see https://msdn.microsoft.com/en-us/library/cc704588.aspx for details: %v", r, e)
+	}
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378522(v=vs.85).aspx
+type LSAString struct {
+	Length        uint16 // USHORT
+	MaximumLength uint16 // USHORT
+	Buffer        *uint8 // PCHAR
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378522(v=vs.85).aspx
+func LSAStringFromString(s string) (LSAString, error) {
+	ansi, err := charmap.Windows1252.NewEncoder().Bytes([]byte(s))
+	if err != nil {
+		return LSAString{}, err
+	}
+	return LSAString{
+		Length:        uint16(len(ansi)),
+		MaximumLength: uint16(len(ansi)),
+		Buffer:        &ansi[0],
+	}, nil
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378297(v=vs.85).aspx
+func LsaLookupAuthenticationPackage(
+	lsaHandle syscall.Handle, // HANDLE
+	packageName *LSAString, // PLSA_STRING
+	authenticationPackage *uint32, // PULONG
+) {
+	r, _, e := procLsaLookupAuthenticationPackage.Call(
+		uintptr(lsaHandle),
+		uintptr(unsafe.Pointer(packageName)),
+		uintptr(unsafe.Pointer(authenticationPackage)),
+	)
+	if r != 0 {
+		err = fmt.Errorf("Got error from LsaLookupAuthenticationPackage sys call: 0x%X, see https://msdn.microsoft.com/en-us/library/cc704588.aspx for details: %v", r, e)
 	}
 	return
 }
