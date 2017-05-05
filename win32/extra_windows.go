@@ -170,6 +170,10 @@ var (
 	KF_FLAG_CREATE                      uint32 = 0x00008000
 	KF_FLAG_NO_APPCONTAINER_REDIRECTION uint32 = 0x00010000
 	KF_FLAG_ALIAS_ONLY                  uint32 = 0x80000000
+
+	MICROSOFT_KERBEROS_NAME_A LSAString = LSAStringMustCompile("Kerberos")
+	MSV1_0_PACKAGE_NAME       LSAString = LSAStringMustCompile("MICROSOFT_AUTHENTICATION_PACKAGE_V1_0")
+	NEGOSSP_NAME_A            LSAString = LSAStringMustCompile("Negotiate")
 )
 
 const (
@@ -183,6 +187,14 @@ const (
 	PROCESS_MODE_BACKGROUND_END   = 0x00200000
 	REALTIME_PRIORITY_CLASS       = 0x00000100
 )
+
+func LSAStringMustCompile(s string) LSAString {
+	l, err := LSAStringFromString(s)
+	if err != nil {
+		panic(err)
+	}
+	return l
+}
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms686347(v=vs.85).aspx
 func SwitchDesktop(
@@ -470,7 +482,7 @@ func LsaLookupAuthenticationPackage(
 	lsaHandle syscall.Handle, // HANDLE
 	packageName *LSAString, // PLSA_STRING
 	authenticationPackage *uint32, // PULONG
-) {
+) (err error) {
 	r, _, e := procLsaLookupAuthenticationPackage.Call(
 		uintptr(lsaHandle),
 		uintptr(unsafe.Pointer(packageName)),
