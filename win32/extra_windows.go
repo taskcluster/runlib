@@ -34,6 +34,7 @@ var (
 	procLsaConnectUntrusted            = secur32.NewProc("LsaConnectUntrusted")
 	procLsaLookupAuthenticationPackage = secur32.NewProc("LsaLookupAuthenticationPackage")
 	procAllocateLocallyUniqueId        = advapi32.NewProc("AllocateLocallyUniqueId")
+	procLsaLogonUser                   = secur32.NewProc("LsaLogonUser")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -240,7 +241,7 @@ func SetPriorityClass(
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb762270(v=vs.85).aspx
 func CreateEnvironmentBlock(
-	lpEnvironment *uintptr, // LPVOID*
+	lpEnvironment *uintptr, // *LPVOID
 	hToken syscall.Handle, // HANDLE
 	bInherit bool, // BOOL
 ) (err error) {
@@ -261,7 +262,7 @@ func CreateEnvironmentBlock(
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb762274(v=vs.85).aspx
 func DestroyEnvironmentBlock(
-	lpEnvironment uintptr, // LPVOID - beware - unlike LPVOID* in CreateEnvironmentBlock!
+	lpEnvironment uintptr, // LPVOID - beware - unlike *LPVOID in CreateEnvironmentBlock!
 ) (err error) {
 	r1, _, e1 := procDestroyEnvironmentBlock.Call(
 		lpEnvironment,
@@ -510,6 +511,86 @@ func AllocateLocallyUniqueId(
 	)
 	if r == 0 {
 		err = syscall.Errno(r)
+	}
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa379631(v=vs.85).aspx
+type TokenSource struct {
+	SourceName       [8]byte // CHAR[TOKEN_SOURCE_LENGTH]
+	SourceIdentifier LUID    // LUID
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa379594(v=vs.85).aspx
+type PSID uintptr
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa379595(v=vs.85).aspx
+type SidAndAttributes struct {
+	Sid        PSID   // PSID
+	Attributes uint32 // DWORD
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa379624(v=vs.85).aspx
+type TokenGroups struct {
+	GroupCount uint32             // DWORD
+	Groups     []SidAndAttributes // SID_AND_ATTRIBUTES[ANYSIZE_ARRAY]
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa379363(v=vs.85).aspx
+type QuotaLimits struct {
+	PagedPoolLimit        uintptr // SIZE_T
+	NonPagedPoolLimit     uintptr // SIZE_T
+	MinimumWorkingSetSize uintptr // SIZE_T
+	MaximumWorkingSetSize uintptr // SIZE_T
+	PagefileLimit         uintptr // SIZE_T
+	TimeLimit             uint64  // LARGE_INTEGER -- is actually a union - might cause trouble on win32, *sigh*
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/hardware/ff565436(v=vs.85).aspx
+type NtStatus uint32
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa380129(v=vs.85).aspx
+// Below, "uint" is just a stab in the dark, since
+// https://msdn.microsoft.com/en-us/library/2dzy4k6e.aspx simply says "The
+// underlying type of the enumerators; all enumerators have the same underlying
+// type. May be any integral type." - thank you Microsoft and C++
+type SecurityLogonType uint
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378292(v=vs.85).aspx
+func LsaLogonUser(
+	lsaHandle syscall.Handle, // HANDLE
+	originName *LSAString, // PLSA_STRING
+	logonType SecurityLogonType, // SECURITY_LOGON_TYPE
+	authenticationPackage uint32, // ULONG
+	authenticationInformation uintptr, // PVOID
+	authenticationInformationLength uint32, // ULONG
+	localGroups *TokenGroups, // PTOKEN_GROUPS
+	sourceContext *TokenSource, // PTOKEN_SOURCE
+	profileBuffer *uintptr, // *PVOID
+	profileBufferLength *uint32, // PULONG
+	logonId *LUID, // PLUID
+	token syscall.Handle, // PHANDLE
+	quotas *QuotaLimits, // PQUOTA_LIMITS
+	subStatus *NtStatus, // PNTSTATUS
+) (err error) {
+	r, _, e := procLsaLogonUser.Call(
+		uintptr(lsaHandle),
+		uintptr(unsafe.Pointer(originName)),
+		uintptr(logonType),
+		uintptr(authenticationPackage),
+		uintptr(authenticationInformation),
+		uintptr(authenticationInformationLength),
+		uintptr(unsafe.Pointer(localGroups)),
+		uintptr(unsafe.Pointer(sourceContext)),
+		uintptr(unsafe.Pointer(profileBuffer)),
+		uintptr(unsafe.Pointer(profileBufferLength)),
+		uintptr(unsafe.Pointer(logonId)),
+		uintptr(token),
+		uintptr(unsafe.Pointer(quotas)),
+		uintptr(unsafe.Pointer(subStatus)),
+	)
+	if r != 0 {
+		err = fmt.Errorf("Got error from LsaLookupAuthenticationPackage sys call: 0x%X, see https://msdn.microsoft.com/en-us/library/cc704588.aspx for details: %v", r, e)
 	}
 	return
 }
