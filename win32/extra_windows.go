@@ -243,7 +243,7 @@ func SetPriorityClass(
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb762270(v=vs.85).aspx
 func CreateEnvironmentBlock(
-	lpEnvironment *uintptr, // *LPVOID
+	lpEnvironment *uintptr, // LPVOID*
 	hToken syscall.Handle, // HANDLE
 	bInherit bool, // BOOL
 ) (err error) {
@@ -264,7 +264,7 @@ func CreateEnvironmentBlock(
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb762274(v=vs.85).aspx
 func DestroyEnvironmentBlock(
-	lpEnvironment uintptr, // LPVOID - beware - unlike *LPVOID in CreateEnvironmentBlock!
+	lpEnvironment uintptr, // LPVOID - beware - unlike LPVOID* in CreateEnvironmentBlock!
 ) (err error) {
 	r1, _, e1 := procDestroyEnvironmentBlock.Call(
 		lpEnvironment,
@@ -615,7 +615,7 @@ func LsaLogonUser(
 	authenticationInformationLength uint32, // ULONG
 	localGroups *TokenGroups, // PTOKEN_GROUPS
 	sourceContext *TokenSource, // PTOKEN_SOURCE
-	profileBuffer *uintptr, // *PVOID
+	profileBuffer *uintptr, // PVOID*
 	profileBufferLength *uint32, // PULONG
 	logonId *LUID, // PLUID
 	token *syscall.Handle, // PHANDLE
