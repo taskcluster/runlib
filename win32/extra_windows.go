@@ -611,7 +611,7 @@ func LsaLogonUser(
 	originName *LSAString, // PLSA_STRING
 	logonType SecurityLogonType, // SECURITY_LOGON_TYPE
 	authenticationPackage uint32, // ULONG
-	authenticationInformation uintptr, // PVOID
+	authenticationInformation *KerbInteractiveLogon, // PVOID -- this is a hack for now - we currently only support this one method so explicitly require KerbInteractiveLogon
 	authenticationInformationLength uint32, // ULONG
 	localGroups *TokenGroups, // PTOKEN_GROUPS
 	sourceContext *TokenSource, // PTOKEN_SOURCE
