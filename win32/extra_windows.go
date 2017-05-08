@@ -627,7 +627,7 @@ func LsaLogonUser(
 		uintptr(unsafe.Pointer(originName)),
 		uintptr(logonType),
 		uintptr(authenticationPackage),
-		uintptr(authenticationInformation),
+		uintptr(unsafe.Pointer(authenticationInformation)),
 		uintptr(authenticationInformationLength),
 		uintptr(unsafe.Pointer(localGroups)),
 		uintptr(unsafe.Pointer(sourceContext)),
