@@ -599,7 +599,7 @@ type KerbInteractiveProfile struct {
 }
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa378058(v=vs.85).aspx
-type KERB_CRYPTO_KEY struct {
+type KerbCryptoKey struct {
 	KeyType int32  // LONG
 	Length  uint32 // ULONG
 	Value   *uint8 // PUCHAR
