@@ -561,12 +561,48 @@ type SecurityLogonType uint
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa378093(v=vs.85).aspx
 type KerbLogonSubmitType uint
 
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378096(v=vs.85).aspx
+type KerbProfileBufferType uint
+
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa378079(v=vs.85).aspx
 type KerbInteractiveLogon struct {
 	MessageType     KerbLogonSubmitType
 	LogonDomainName ntr.LSAUnicodeString
 	UserName        ntr.LSAUnicodeString
 	Password        ntr.LSAUnicodeString
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378147(v=vs.85).aspx
+type KerbTicketProfile struct {
+	Profile    KerbInteractiveProfile
+	SessionKey KerbCryptoKey
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378083(v=vs.85).aspx
+type KerbInteractiveProfile struct {
+	MessageType        KerbProfileBufferType
+	LogonCount         uint16               // USHORT
+	BadPasswordCount   uint16               // USHORT
+	LogonTime          uint64               // LARGE_INTEGER -- is actually a union - might cause trouble on win32, *sigh*
+	LogoffTime         uint64               // LARGE_INTEGER -- is actually a union - might cause trouble on win32, *sigh*
+	KickOffTime        uint64               // LARGE_INTEGER -- is actually a union - might cause trouble on win32, *sigh*
+	PasswordLastSet    uint64               // LARGE_INTEGER -- is actually a union - might cause trouble on win32, *sigh*
+	PasswordCanChange  uint64               // LARGE_INTEGER -- is actually a union - might cause trouble on win32, *sigh*
+	PasswordMustChange uint64               // LARGE_INTEGER -- is actually a union - might cause trouble on win32, *sigh*
+	LogonScript        ntr.LSAUnicodeString // UNICODE_STRING
+	HomeDirectory      ntr.LSAUnicodeString // UNICODE_STRING
+	FullName           ntr.LSAUnicodeString // UNICODE_STRING
+	ProfilePath        ntr.LSAUnicodeString // UNICODE_STRING
+	HomeDirectoryDrive ntr.LSAUnicodeString // UNICODE_STRING
+	LogonServer        ntr.LSAUnicodeString // UNICODE_STRING
+	UserFlags          uint32               // ULONG
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378058(v=vs.85).aspx
+type KERB_CRYPTO_KEY struct {
+	KeyType int32  // LONG
+	Length  uint32 // ULONG
+	Value   *uint8 // PUCHAR
 }
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa378292(v=vs.85).aspx
