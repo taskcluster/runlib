@@ -618,7 +618,7 @@ func LsaLogonUser(
 	profileBuffer *uintptr, // *PVOID
 	profileBufferLength *uint32, // PULONG
 	logonId *LUID, // PLUID
-	token syscall.Handle, // PHANDLE
+	token *syscall.Handle, // PHANDLE
 	quotas *QuotaLimits, // PQUOTA_LIMITS
 	subStatus *NtStatus, // PNTSTATUS
 ) (err error) {
@@ -634,7 +634,7 @@ func LsaLogonUser(
 		uintptr(unsafe.Pointer(profileBuffer)),
 		uintptr(unsafe.Pointer(profileBufferLength)),
 		uintptr(unsafe.Pointer(logonId)),
-		uintptr(token),
+		uintptr(unsafe.Pointer(token)),
 		uintptr(unsafe.Pointer(quotas)),
 		uintptr(unsafe.Pointer(subStatus)),
 	)
