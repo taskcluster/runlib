@@ -14,6 +14,8 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
+	"github.com/taskcluster/ntr"
+
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -555,6 +557,17 @@ type NtStatus uint32
 // underlying type of the enumerators; all enumerators have the same underlying
 // type. May be any integral type." - thank you Microsoft and C++
 type SecurityLogonType uint
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378093(v=vs.85).aspx
+type KerbLogonSubmitType uint
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378079(v=vs.85).aspx
+type KerbInteractiveLogon struct {
+	MessageType     KerbLogonSubmitType
+	LogonDomainName ntr.LSAUnicodeString
+	UserName        ntr.LSAUnicodeString
+	Password        ntr.LSAUnicodeString
+}
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa378292(v=vs.85).aspx
 func LsaLogonUser(
