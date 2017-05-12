@@ -612,7 +612,7 @@ func LsaLogonUser(
 	originName *LSAString, // PLSA_STRING
 	logonType SecurityLogonType, // SECURITY_LOGON_TYPE
 	authenticationPackage uint32, // ULONG
-	authenticationInformation *KerbInteractiveLogon, // PVOID -- this is a hack for now - we currently only support this one method so explicitly require KerbInteractiveLogon
+	authenticationInformation *byte, // PVOID
 	authenticationInformationLength uint32, // ULONG
 	localGroups *TokenGroups, // PTOKEN_GROUPS
 	sourceContext *TokenSource, // PTOKEN_SOURCE
@@ -648,3 +648,130 @@ func LsaLogonUser(
 // TODO: nice-to-have but not necessary: would make troubleshooting easier
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms721800(v=vs.85).aspx
 func LsaNtStatusToWinError() {}
+
+// NewInteractiveLogonSession authenticates a security principal's logon data
+// and returns a new interactive logon session.
+//
+// Currently this only works for accounts that are connected to a domain, not
+// with local user accounts.
+//
+// The originName parameter should specify meaningful information. For example,
+// it might contain "TTY1" to indicate terminal one or "NTLM - remote node
+// JAZZ" to indicate a network logon that uses NTLM through a remote node
+// called "JAZZ".
+//
+// The sourceName parameter specifies an 8-byte ASCII character string used to
+// identify the source of an access token. This is used to distinguish between
+// such sources as Session Manager, LAN Manager, and RPC Server. A string,
+// rather than a constant, is used to identify the source so users and
+// developers can make extensions to the system, such as by adding other
+// networks, that act as the source of access tokens.
+func NewInteractiveLogonSession(logonDomain, username, password, originName string, sourceName [8]byte) (profileBuffer uintptr, profileBufferLength uint32, logonId LUID, token syscall.Handle, quotas QuotaLimits, subStatus NtStatus, err error) {
+
+	// Before making any syscalls, first validate inputs...
+
+	var lsaDomain, lsaUsername, lsaPassword ntr.LSAUnicodeString
+
+	lsaDomain, err = ntr.LSAUnicodeStringFromString(logonDomain)
+	if err != nil {
+		return
+	}
+	lsaUsername, err = ntr.LSAUnicodeStringFromString(username)
+	if err != nil {
+		return
+	}
+	lsaPassword, err = ntr.LSAUnicodeStringFromString(password)
+	if err != nil {
+		return
+	}
+	var oName LSAString
+	oName, err = LSAStringFromString(originName)
+	if err != nil {
+		return
+	}
+
+	// Validation complete.
+
+	h := syscall.Handle(0)
+	err = LsaConnectUntrusted(&h)
+	if err != nil {
+		return
+	}
+
+	authPackage := uint32(0)
+	err = LsaLookupAuthenticationPackage(h, &MICROSOFT_KERBEROS_NAME_A, &authPackage)
+	if err != nil {
+		return
+	}
+
+	l := LUID{}
+	err = AllocateLocallyUniqueId(&l)
+	if err != nil {
+		return
+	}
+
+	authenticationInformation := KerbInteractiveLogon{
+		MessageType:     2, // KerbInteractiveLogon
+		LogonDomainName: lsaDomain,
+		UserName:        lsaUsername,
+		Password:        lsaPassword,
+	}
+
+	// Although the MSDN docs don't state this, the authenticationInformation
+	// buffer has to be a contiguous block that includes the KerbInteractiveLogon
+	// struct and the three LSA unicode string buffers.
+
+	// This requires some delicate surgery.
+
+	// 1) Copy the three LSA unicode string buffers into their own []byte
+	domainNameCopy := (*(*[1<<31 - 1]byte)(unsafe.Pointer(lsaDomain.Buffer)))[:lsaDomain.MaximumLength]
+	userNameCopy := (*(*[1<<31 - 1]byte)(unsafe.Pointer(lsaUsername.Buffer)))[:lsaUsername.MaximumLength]
+	passwordCopy := (*(*[1<<31 - 1]byte)(unsafe.Pointer(lsaPassword.Buffer)))[:lsaPassword.MaximumLength]
+
+	// 2) Calculate the number of bytes of contiguous memory required to fit the
+	// struct and the three LSA unicode string buffers
+	authenticationInformationLength := uint32(unsafe.Sizeof(authenticationInformation)) + uint32(len(domainNameCopy)+len(userNameCopy)+len(passwordCopy))
+
+	// 3) Allocate a new []byte to store the entire block
+	authInfoBuffer := make([]byte, authenticationInformationLength)
+
+	// 4) Calculate the physical address inside this new block where the LSA
+	// buffers will sit, and update the existing pointer references to the new
+	// locations (even though the buffers do not exist there yet)
+	authenticationInformation.LogonDomainName.Buffer = (*uint16)(unsafe.Pointer(uintptr(unsafe.Pointer(&authInfoBuffer[0])) + unsafe.Sizeof(KerbInteractiveLogon{})))
+	authenticationInformation.UserName.Buffer = (*uint16)(unsafe.Pointer(uintptr(unsafe.Pointer(authenticationInformation.LogonDomainName.Buffer)) + uintptr(authenticationInformation.LogonDomainName.MaximumLength)))
+	authenticationInformation.Password.Buffer = (*uint16)(unsafe.Pointer(uintptr(unsafe.Pointer(authenticationInformation.UserName.Buffer)) + uintptr(authenticationInformation.UserName.MaximumLength)))
+
+	// 5) Copy the updated authenticationInformation (with correct absolute pointer
+	// references to LSA buffers) into a new []byte
+	authInfoCopy := (*(*[1<<31 - 1]byte)(unsafe.Pointer(&authenticationInformation)))[:unsafe.Sizeof(authenticationInformation)]
+
+	// 6) Append the three LSA buffers to it
+	authInfoCopy = append(authInfoCopy, domainNameCopy...)
+	authInfoCopy = append(authInfoCopy, userNameCopy...)
+	authInfoCopy = append(authInfoCopy, passwordCopy...)
+
+	// 7) Copy the entire block over to the target block we allocated in step 3
+	copy(authInfoBuffer, authInfoCopy)
+
+	err = LsaLogonUser(
+		h,
+		&oName,
+		2, // Interactive
+		authPackage,
+		&authInfoBuffer[0],
+		authenticationInformationLength,
+		nil,
+		&TokenSource{
+			SourceName:       sourceName,
+			SourceIdentifier: l,
+		},
+		&profileBuffer,
+		&profileBufferLength,
+		&logonId,
+		&token,
+		&quotas,
+		&subStatus,
+	)
+	return
+}
