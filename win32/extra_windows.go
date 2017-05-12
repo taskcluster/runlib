@@ -37,6 +37,9 @@ var (
 	procLsaLookupAuthenticationPackage = secur32.NewProc("LsaLookupAuthenticationPackage")
 	procAllocateLocallyUniqueId        = advapi32.NewProc("AllocateLocallyUniqueId")
 	procLsaLogonUser                   = secur32.NewProc("LsaLogonUser")
+	procLsaCallAuthenticationPackage   = secur32.NewProc("LsaCallAuthenticationPackage")
+	procLsaFreeReturnBuffer            = secur32.NewProc("LsaFreeReturnBuffer")
+	procLsaRegisterLogonProcess        = secur32.NewProc("LsaRegisterLogonProcess")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -162,6 +165,8 @@ var (
 	FOLDERID_Windows                = syscall.GUID{Data1: 0xF38BF404, Data2: 0x1D43, Data3: 0x42F2, Data4: [8]byte{0x93, 0x05, 0x67, 0xDE, 0x0B, 0x28, 0xFC, 0x23}}
 )
 
+type Msv1_0_LogonSubmitType uint32
+
 var (
 	KF_FLAG_DEFAULT                     uint32 = 0x00000000
 	KF_FLAG_SIMPLE_IDLIST               uint32 = 0x00000100
@@ -178,6 +183,17 @@ var (
 	MICROSOFT_KERBEROS_NAME_A LSAString = LSAStringMustCompile("Kerberos")
 	MSV1_0_PACKAGE_NAME       LSAString = LSAStringMustCompile("MICROSOFT_AUTHENTICATION_PACKAGE_V1_0")
 	NEGOSSP_NAME_A            LSAString = LSAStringMustCompile("Negotiate")
+
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378764(v=vs.85).aspx
+	// MSV1_0_LOGON_SUBMIT_TYPE enumeration
+	MsV1_0InteractiveLogon       Msv1_0_LogonSubmitType = 2
+	MsV1_0Lm20Logon              Msv1_0_LogonSubmitType = 3
+	MsV1_0NetworkLogon           Msv1_0_LogonSubmitType = 4
+	MsV1_0SubAuthLogon           Msv1_0_LogonSubmitType = 5
+	MsV1_0WorkstationUnlockLogon Msv1_0_LogonSubmitType = 7
+	MsV1_0S4ULogon               Msv1_0_LogonSubmitType = 12
+	MsV1_0VirtualLogon           Msv1_0_LogonSubmitType = 82
+	MsV1_0NoElevationLogon       Msv1_0_LogonSubmitType = 82
 )
 
 const (
@@ -774,4 +790,107 @@ func NewInteractiveLogonSession(logonDomain, username, password, originName stri
 		&subStatus,
 	)
 	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378261(v=vs.85).aspx
+func LsaCallAuthenticationPackage(
+	lsaHandle syscall.Handle, // HANDLE
+	authenticationPackage uint32, // ULONG
+	protocolSubmitBuffer *byte, // PVOID
+	submitBufferLength uint32, // ULONG
+	protocolReturnBuffer *uintptr, // *PVOID
+	returnBufferLength **uint32, // *PULONG
+	protocolStatus *NtStatus, // PNTSTATUS
+) (err error) {
+	r, _, e := procLsaCallAuthenticationPackage.Call(
+		uintptr(lsaHandle),
+		uintptr(authenticationPackage),
+		uintptr(unsafe.Pointer(protocolSubmitBuffer)),
+		uintptr(submitBufferLength),
+		uintptr(unsafe.Pointer(protocolReturnBuffer)),
+		uintptr(unsafe.Pointer(returnBufferLength)),
+		uintptr(unsafe.Pointer(protocolStatus)),
+	)
+	if r != 0 {
+		err = fmt.Errorf("Got error from LsaCallAuthenticationPackage sys call: 0x%X, see https://msdn.microsoft.com/en-us/library/cc704588.aspx for details: %v", r, e)
+	}
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378279(v=vs.85).aspx
+func LsaFreeReturnBuffer(
+	buffer *byte, // PVOID
+) (err error) {
+	r, _, e := procLsaFreeReturnBuffer.Call(
+		uintptr(unsafe.Pointer(buffer)),
+	)
+	if r != 0 {
+		err = fmt.Errorf("Got error from LsaFreeReturnBuffer sys call: 0x%X, see https://msdn.microsoft.com/en-us/library/cc704588.aspx for details: %v", r, e)
+	}
+	return
+}
+
+type LSAOperationalMode uint32 // ULONG
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378318(v=vs.85).aspx
+func LsaRegisterLogonProcess(
+	logonProcessName *LSAString, // PLSA_STRING
+	lsaHandle *syscall.Handle, // PHANDLE
+	securityMode *LSAOperationalMode, // PLSA_OPERATIONAL_MODE
+) (err error) {
+	r, _, e := procLsaRegisterLogonProcess.Call(
+		uintptr(unsafe.Pointer(logonProcessName)),
+		uintptr(unsafe.Pointer(lsaHandle)),
+		uintptr(unsafe.Pointer(securityMode)),
+	)
+	if r != 0 {
+		err = fmt.Errorf("Got error from LsaRegisterLogonProcess sys call: 0x%X, see https://msdn.microsoft.com/en-us/library/cc704588.aspx for details: %v", r, e)
+	}
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378767(v=vs.85).aspx
+// typedef struct _MSV1_0_SUBAUTH_LOGON{
+//     MSV1_0_LOGON_SUBMIT_TYPE MessageType;
+//     UNICODE_STRING LogonDomainName;
+//     UNICODE_STRING UserName;
+//     UNICODE_STRING Workstation;
+//     UCHAR ChallengeToClient[MSV1_0_CHALLENGE_LENGTH];
+//     STRING AuthenticationInfo1;
+//     STRING AuthenticationInfo2;
+//     ULONG ParameterControl;
+//     ULONG SubAuthPackageId;
+// } MSV1_0_SUBAUTH_LOGON, * PMSV1_0_SUBAUTH_LOGON;
+type Msv1_0_SubAuthLogon struct {
+	MessageType         Msv1_0_LogonSubmitType
+	LogonDomainName     ntr.LSAUnicodeString
+	UserName            ntr.LSAUnicodeString
+	Workstation         ntr.LSAUnicodeString
+	CallengeToClient    [8]byte
+	AuthenticationInfo1 LSAString
+	AuthenticationInfo2 LSAString
+	ParameterControl    uint32
+	SubAuthPackageId    uint32
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378762(v=vs.85).aspx
+// typedef struct _MSV1_0_LM20_LOGON {
+//   MSV1_0_LOGON_SUBMIT_TYPE MessageType;
+//   UNICODE_STRING           LogonDomainName;
+//   UNICODE_STRING           UserName;
+//   UNICODE_STRING           Workstation;
+//   UCHAR                    ChallengeToClient[MSV1_0_CHALLENGE_LENGTH];
+//   STRING                   CaseSensitiveChallengeResponse;
+//   STRING                   CaseInsensitiveChallengeResponse;
+//   ULONG                    ParameterControl;
+// } MSV1_0_LM20_LOGON, *PMSV1_0_LM20_LOGON;
+type Msv1_0_Lm20Logon struct {
+	MessageType                      Msv1_0_LogonSubmitType
+	LogonDomainName                  ntr.LSAUnicodeString
+	UserName                         ntr.LSAUnicodeString
+	Workstation                      ntr.LSAUnicodeString
+	CallengeToClient                 [8]byte
+	CaseSensitiveChallengeResponse   LSAString
+	CaseInsensitiveChallengeResponse LSAString
+	ParameterControl                 uint32
 }
