@@ -166,6 +166,7 @@ var (
 )
 
 type Msv1_0_LogonSubmitType uint32
+type Msv1_0_ProtocolMessageType uint32
 
 var (
 	KF_FLAG_DEFAULT                     uint32 = 0x00000000
@@ -194,6 +195,29 @@ var (
 	MsV1_0S4ULogon               Msv1_0_LogonSubmitType = 12
 	MsV1_0VirtualLogon           Msv1_0_LogonSubmitType = 82
 	MsV1_0NoElevationLogon       Msv1_0_LogonSubmitType = 82
+
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378766(v=vs.85).aspx
+	// MSV1_0_PROTOCOL_MESSAGE_TYPE
+	MsV1_0Lm20ChallengeRequest     Msv1_0_ProtocolMessageType = 0
+	MsV1_0Lm20GetChallengeResponse Msv1_0_ProtocolMessageType = 1
+	MsV1_0EnumerateUsers           Msv1_0_ProtocolMessageType = 2
+	MsV1_0GetUserInfo              Msv1_0_ProtocolMessageType = 3
+	MsV1_0ReLogonUsers             Msv1_0_ProtocolMessageType = 4
+	MsV1_0ChangePassword           Msv1_0_ProtocolMessageType = 5
+	MsV1_0ChangeCachedPassword     Msv1_0_ProtocolMessageType = 6
+	MsV1_0GenericPassthrough       Msv1_0_ProtocolMessageType = 7
+	MsV1_0CacheLogon               Msv1_0_ProtocolMessageType = 8
+	MsV1_0SubAuth                  Msv1_0_ProtocolMessageType = 9
+	MsV1_0DeriveCredential         Msv1_0_ProtocolMessageType = 10
+	MsV1_0CacheLookup              Msv1_0_ProtocolMessageType = 11
+	MsV1_0SetProcessOption         Msv1_0_ProtocolMessageType = 12
+	MsV1_0ConfigLocalAliases       Msv1_0_ProtocolMessageType = 13
+	MsV1_0ClearCachedCredentials   Msv1_0_ProtocolMessageType = 14
+	MsV1_0LookupToken              Msv1_0_ProtocolMessageType = 15
+	MsV1_0ValidateAuth             Msv1_0_ProtocolMessageType = 16
+	MsV1_0CacheLookupEx            Msv1_0_ProtocolMessageType = 17
+	MsV1_0GetCredentialKey         Msv1_0_ProtocolMessageType = 18
+	MsV1_0SetThreadOption          Msv1_0_ProtocolMessageType = 19
 )
 
 const (
@@ -893,4 +917,8 @@ type Msv1_0_Lm20Logon struct {
 	CaseSensitiveChallengeResponse   LSAString
 	CaseInsensitiveChallengeResponse LSAString
 	ParameterControl                 uint32
+}
+
+// TODO: https://msdn.microsoft.com/en-us/library/windows/desktop/aa378269(v=vs.85).aspx
+func LsaDeregisterLogonProcess() {
 }
