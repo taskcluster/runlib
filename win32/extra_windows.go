@@ -534,8 +534,8 @@ type SidAndAttributes struct {
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa379624(v=vs.85).aspx
 type TokenGroups struct {
-	GroupCount uint32             // DWORD
-	Groups     []SidAndAttributes // SID_AND_ATTRIBUTES[ANYSIZE_ARRAY]
+	GroupCount uint32           // DWORD
+	Groups     SidAndAttributes // SID_AND_ATTRIBUTES[ANYSIZE_ARRAY]
 }
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa379363(v=vs.85).aspx
@@ -552,11 +552,12 @@ type QuotaLimits struct {
 type NtStatus uint32
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa380129(v=vs.85).aspx
-// Below, "uint" is just a stab in the dark, since
+// Below, "uint32" is determined by experimenting with C++, since
 // https://msdn.microsoft.com/en-us/library/2dzy4k6e.aspx simply says "The
 // underlying type of the enumerators; all enumerators have the same underlying
-// type. May be any integral type." - thank you Microsoft and C++
-type SecurityLogonType uint
+// type. May be any integral type." - thank you Microsoft and C++.
+// By writing a C++ program that displays the memory, I determined it is 4 bytes.
+type SecurityLogonType uint32
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa378093(v=vs.85).aspx
 type KerbLogonSubmitType uint
