@@ -937,3 +937,40 @@ type Msv1_0_InteractiveLogon struct {
 	UserName        ntr.LSAUnicodeString
 	Password        ntr.LSAUnicodeString
 }
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378761(v=vs.85).aspx
+// typedef struct _MSV1_0_INTERACTIVE_PROFILE {
+//   MSV1_0_PROFILE_BUFFER_TYPE MessageType;
+//   USHORT                     LogonCount;
+//   USHORT                     BadPasswordCount;
+//   LARGE_INTEGER              LogonTime;
+//   LARGE_INTEGER              LogoffTime;
+//   LARGE_INTEGER              KickOffTime;
+//   LARGE_INTEGER              PasswordLastSet;
+//   LARGE_INTEGER              PasswordCanChange;
+//   LARGE_INTEGER              PasswordMustChange;
+//   UNICODE_STRING             LogonScript;
+//   UNICODE_STRING             HomeDirectory;
+//   UNICODE_STRING             FullName;
+//   UNICODE_STRING             ProfilePath;
+//   UNICODE_STRING             HomeDirectoryDrive;
+//   UNICODE_STRING             LogonServer;
+//   ULONG                      UserFlags;
+// } MSV1_0_INTERACTIVE_PROFILE, *PMSV1_0_INTERACTIVE_PROFILE;
+type Msv1_0_InteractiveProfile struct {
+	MessageType        uint32
+	LogonCount         uint16
+	BadPasswordCount   uint16
+	LogonTime          uint64
+	LogoffTime         uint64
+	KickOffTime        uint64
+	PasswordLastSet    uint64
+	PasswordMustChange uint64
+	LogonScript        ntr.LSAUnicodeString
+	HomeDirectory      ntr.LSAUnicodeString
+	FullName           ntr.LSAUnicodeString
+	ProfilePath        ntr.LSAUnicodeString
+	HomeDirectoryDrive ntr.LSAUnicodeString
+	LogonServer        ntr.LSAUnicodeString
+	UserFlags          uint32
+}
