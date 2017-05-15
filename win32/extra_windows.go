@@ -923,3 +923,17 @@ type Msv1_0_Lm20Logon struct {
 // TODO: https://msdn.microsoft.com/en-us/library/windows/desktop/aa378269(v=vs.85).aspx
 func LsaDeregisterLogonProcess() {
 }
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa378760(v=vs.85).aspx
+// typedef struct _MSV1_0_INTERACTIVE_LOGON {
+//   MSV1_0_LOGON_SUBMIT_TYPE MessageType;
+//   UNICODE_STRING           LogonDomainName;
+//   UNICODE_STRING           UserName;
+//   UNICODE_STRING           Password;
+// } MSV1_0_INTERACTIVE_LOGON;
+type Msv1_0_InteractiveLogon struct {
+	MessageType     Msv1_0_LogonSubmitType
+	LogonDomainName ntr.LSAUnicodeString
+	UserName        ntr.LSAUnicodeString
+	Password        ntr.LSAUnicodeString
+}
