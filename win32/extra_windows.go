@@ -689,11 +689,8 @@ func LsaLogonUser(
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms721800(v=vs.85).aspx
 func LsaNtStatusToWinError() {}
 
-// NewInteractiveLogonSession authenticates a security principal's logon data
+// InteractiveDomainLogon authenticates a security principal's logon data
 // and returns a new interactive logon session.
-//
-// Currently this only works for accounts that are connected to a domain, not
-// with local user accounts.
 //
 // The originName parameter should specify meaningful information. For example,
 // it might contain "TTY1" to indicate terminal one or "NTLM - remote node
@@ -706,7 +703,7 @@ func LsaNtStatusToWinError() {}
 // rather than a constant, is used to identify the source so users and
 // developers can make extensions to the system, such as by adding other
 // networks, that act as the source of access tokens.
-func NewInteractiveLogonSession(logonDomain, username, password, originName string, sourceName [8]byte) (profileBuffer uintptr, profileBufferLength uint32, logonId LUID, token syscall.Handle, quotas QuotaLimits, subStatus NtStatus, err error) {
+func InteractiveDomainLogon(logonDomain, username, password, originName string, sourceName [8]byte) (profileBuffer uintptr, profileBufferLength uint32, logonId LUID, token syscall.Handle, quotas QuotaLimits, subStatus NtStatus, err error) {
 
 	// Before making any syscalls, first validate inputs...
 
@@ -813,6 +810,10 @@ func NewInteractiveLogonSession(logonDomain, username, password, originName stri
 		&quotas,
 		&subStatus,
 	)
+	// Not sure if err != nil can leave corrupt data, so to be safe, return newly allocated zero values
+	if err != nil {
+		return 0, 0, LUID{}, 0, QuotaLimits{}, 0, err
+	}
 	return
 }
 
