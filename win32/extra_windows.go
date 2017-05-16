@@ -5,6 +5,7 @@ package win32
 // for understanding the c++ -> go type mappings
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -20,9 +21,10 @@ import (
 )
 
 var (
-	shell32 = NewLazyDLL("shell32.dll")
-	ole32   = NewLazyDLL("ole32.dll")
-	secur32 = NewLazyDLL("secur32.dll")
+	shell32  = NewLazyDLL("shell32.dll")
+	ole32    = NewLazyDLL("ole32.dll")
+	secur32  = NewLazyDLL("secur32.dll")
+	wtsapi32 = NewLazyDLL("wtsapi32.dll")
 
 	procCloseDesktop                   = user32.NewProc("CloseDesktop")
 	procSwitchDesktop                  = user32.NewProc("SwitchDesktop")
@@ -40,6 +42,8 @@ var (
 	procLsaCallAuthenticationPackage   = secur32.NewProc("LsaCallAuthenticationPackage")
 	procLsaFreeReturnBuffer            = secur32.NewProc("LsaFreeReturnBuffer")
 	procLsaRegisterLogonProcess        = secur32.NewProc("LsaRegisterLogonProcess")
+	procWTSQueryUserToken              = wtsapi32.NewProc("WTSQueryUserToken")
+	procWTSGetActiveConsoleSessionId   = kernel32.NewProc("WTSQueryUserToken")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -973,4 +977,35 @@ type Msv1_0_InteractiveProfile struct {
 	HomeDirectoryDrive ntr.LSAUnicodeString
 	LogonServer        ntr.LSAUnicodeString
 	UserFlags          uint32
+}
+
+// https://msdn.microsoft.com/en-us/library/aa383840(VS.85).aspx
+// BOOL WTSQueryUserToken(
+//    _In_  ULONG   SessionId,
+//    _Out_ PHANDLE phToken
+// );
+func WTSQueryUserToken(
+	sessionId uint32,
+	phToken *syscall.Handle,
+) (err error) {
+	r1, _, e1 := procWTSQueryUserToken.Call(
+		uintptr(sessionId),
+		uintptr(unsafe.Pointer(phToken)),
+	)
+	if r1 == 0 {
+		err = os.NewSyscallError("WTSQueryUserToken", e1)
+	}
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/aa383835(VS.85).aspx
+// DWORD WTSGetActiveConsoleSessionId(void);
+func WTSGetActiveConsoleSessionId() (sessionId uint32, err error) {
+	r1, _, _ := procWTSGetActiveConsoleSessionId.Call()
+	if r1 == 0xFFFFFFFF {
+		err = os.NewSyscallError("WTSGetActiveConsoleSessionId", errors.New("Got return value 0xFFFFFFFF from syscall WTSGetActiveConsoleSessionId"))
+	} else {
+		sessionId = uint32(r1)
+	}
+	return
 }
