@@ -43,7 +43,7 @@ var (
 	procLsaFreeReturnBuffer            = secur32.NewProc("LsaFreeReturnBuffer")
 	procLsaRegisterLogonProcess        = secur32.NewProc("LsaRegisterLogonProcess")
 	procWTSQueryUserToken              = wtsapi32.NewProc("WTSQueryUserToken")
-	procWTSGetActiveConsoleSessionId   = kernel32.NewProc("WTSQueryUserToken")
+	procWTSGetActiveConsoleSessionId   = kernel32.NewProc("WTSGetActiveConsoleSessionId")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
