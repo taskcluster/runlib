@@ -1009,3 +1009,13 @@ func WTSGetActiveConsoleSessionId() (sessionId uint32, err error) {
 	}
 	return
 }
+
+func InteractiveUserToken() (hToken syscall.Handle, err error) {
+	var sessionId uint32
+	sessionId, err = WTSGetActiveConsoleSessionId()
+	if err != nil {
+		return
+	}
+	err = WTSQueryUserToken(sessionId, &hToken)
+	return
+}

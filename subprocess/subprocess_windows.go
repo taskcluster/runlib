@@ -140,7 +140,6 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	si.ShowWindow = syscall.SW_SHOWMINNOACTIVE
 
 	isWindows8OrGreater := win32.IsWindows8OrGreater()
-	useCreateProcessWithLogonW := !sub.NoJob || isWindows8OrGreater
 	creationFlags := uint32(win32.CREATE_SUSPENDED | syscall.CREATE_UNICODE_ENVIRONMENT)
 	if !isWindows8OrGreater {
 		creationFlags |= win32.CREATE_BREAKAWAY_FROM_JOB
@@ -170,7 +169,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 		if e != nil {
 			return nil, e
 		}
-		if useCreateProcessWithLogonW {
+		if sub.Login.Username != "" && (!sub.NoJob || isWindows8OrGreater) {
 			e = win32.CreateProcessWithLogonW(
 				syscall.StringToUTF16Ptr(sub.Login.Username),
 				syscall.StringToUTF16Ptr("."),
