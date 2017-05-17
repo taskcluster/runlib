@@ -1021,7 +1021,9 @@ func InteractiveUserToken(timeout time.Duration) (hToken syscall.Handle, err err
 		}
 		time.Sleep(time.Second)
 		sessionId, err = WTSGetActiveConsoleSessionId()
+		if err == nil {
+			err = WTSQueryUserToken(sessionId, &hToken)
+		}
 	}
-	err = WTSQueryUserToken(sessionId, &hToken)
 	return
 }
