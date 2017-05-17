@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+	"time"
 	"unicode/utf8"
 	"unsafe"
 
@@ -1010,11 +1011,16 @@ func WTSGetActiveConsoleSessionId() (sessionId uint32, err error) {
 	return
 }
 
-func InteractiveUserToken() (hToken syscall.Handle, err error) {
+func InteractiveUserToken(timeout time.Duration) (hToken syscall.Handle, err error) {
+	deadline := time.Now().Add(timeout)
 	var sessionId uint32
 	sessionId, err = WTSGetActiveConsoleSessionId()
-	if err != nil {
-		return
+	for err != nil {
+		if time.Now().After(deadline) {
+			return
+		}
+		time.Sleep(time.Second)
+		sessionId, err = WTSGetActiveConsoleSessionId()
 	}
 	err = WTSQueryUserToken(sessionId, &hToken)
 	return
