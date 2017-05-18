@@ -45,6 +45,7 @@ var (
 	procLsaRegisterLogonProcess        = secur32.NewProc("LsaRegisterLogonProcess")
 	procWTSQueryUserToken              = wtsapi32.NewProc("WTSQueryUserToken")
 	procWTSGetActiveConsoleSessionId   = kernel32.NewProc("WTSGetActiveConsoleSessionId")
+	procGetProfilesDirectory           = userenv.NewProc("GetProfilesDirectory")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -1029,4 +1030,31 @@ func InteractiveUserToken(timeout time.Duration) (hToken syscall.Handle, err err
 		}
 	}
 	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/bb762278(v=vs.85).aspx
+// BOOL WINAPI GetProfilesDirectory(
+//   _Out_   LPTSTR  lpProfilesDir,
+//   _Inout_ LPDWORD lpcchSize
+// );
+func GetProfilesDirectory(
+	lpProfilesDir *uint16,
+	lpcchSize *uint32,
+) (err error) {
+	r1, _, e1 := procGetProfilesDirectory.Call(
+		uintptr(unsafe.Pointer(lpProfilesDir)),
+		uintptr(unsafe.Pointer(lpcchSize)),
+	)
+	if r1 == 0 {
+		err = os.NewSyscallError("GetProfilesDirectory", e1)
+	}
+	return
+}
+
+func ProfilesDirectory() string {
+	lpcchSize = &uint32(0)
+	GetProfilesDirectory(nil, lpcchSize)
+	u16 := make([]uint16, *lpcchSize)
+	GetProfilesDirectory(&u16[0], len(u16))
+	return syscall.UTF16ToString(u16)
 }
