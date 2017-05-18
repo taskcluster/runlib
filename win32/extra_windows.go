@@ -45,7 +45,7 @@ var (
 	procLsaRegisterLogonProcess        = secur32.NewProc("LsaRegisterLogonProcess")
 	procWTSQueryUserToken              = wtsapi32.NewProc("WTSQueryUserToken")
 	procWTSGetActiveConsoleSessionId   = kernel32.NewProc("WTSGetActiveConsoleSessionId")
-	procGetProfilesDirectory           = userenv.NewProc("GetProfilesDirectory")
+	procGetProfilesDirectory           = userenv.NewProc("GetProfilesDirectoryW")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -1052,9 +1052,9 @@ func GetProfilesDirectory(
 }
 
 func ProfilesDirectory() string {
-	lpcchSize = &uint32(0)
-	GetProfilesDirectory(nil, lpcchSize)
-	u16 := make([]uint16, *lpcchSize)
-	GetProfilesDirectory(&u16[0], len(u16))
+	lpcchSize := uint32(0)
+	GetProfilesDirectory(nil, &lpcchSize)
+	u16 := make([]uint16, lpcchSize)
+	GetProfilesDirectory(&u16[0], &lpcchSize)
 	return syscall.UTF16ToString(u16)
 }
