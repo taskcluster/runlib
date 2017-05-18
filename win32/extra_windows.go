@@ -46,6 +46,7 @@ var (
 	procWTSQueryUserToken              = wtsapi32.NewProc("WTSQueryUserToken")
 	procWTSGetActiveConsoleSessionId   = kernel32.NewProc("WTSGetActiveConsoleSessionId")
 	procGetProfilesDirectory           = userenv.NewProc("GetProfilesDirectoryW")
+	procGetUserProfileDirectory        = userenv.NewProc("GetUserProfileDirectoryW")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -1012,6 +1013,18 @@ func WTSGetActiveConsoleSessionId() (sessionId uint32, err error) {
 	return
 }
 
+// InteractiveUserToken returns a user token (security context) for the
+// interactive desktop session attached to the default console (i.e. what would
+// be seen on a display connected directly to the computer, rather than a
+// remote RDP session). It must be called from a process which is running under
+// LocalSystem account in order to have the necessary privileges (typically a
+// Windows service). Since the service might be running before a local logon
+// occurs, a timeout can be specified for waiting for a successful logon (via
+// winlogon) to occur.  The returned token can be used in e.g.
+// CreateProcessAsUser system call, which allows e.g. a Windows service to run
+// a process in the interactive desktop session, as if the logged in user had
+// executed the process directly. The function additionally waits for the user
+// profile directory to exist, before returning.
 func InteractiveUserToken(timeout time.Duration) (hToken syscall.Handle, err error) {
 	deadline := time.Now().Add(timeout)
 	var sessionId uint32
@@ -1027,6 +1040,20 @@ func InteractiveUserToken(timeout time.Duration) (hToken syscall.Handle, err err
 		sessionId, err = WTSGetActiveConsoleSessionId()
 		if err == nil {
 			err = WTSQueryUserToken(sessionId, &hToken)
+		}
+	}
+	// to be safe, let's make sure profile directory has already been created,
+	// to avoid likely race conditions outside of this function
+	var userProfileDir string
+	userProfileDir, err = ProfileDirectory(hToken)
+	for err != nil {
+		if time.Now().After(deadline) {
+			return
+		}
+		time.Sleep(time.Second / 10)
+		userProfileDir, err = ProfileDirectory(hToken)
+		if err == nil {
+			_, err = os.Stat(userProfileDir)
 		}
 	}
 	return
@@ -1051,12 +1078,60 @@ func GetProfilesDirectory(
 	return
 }
 
+// ProfileDirectory returns the profile directory of the user represented by
+// the given user handle
+func ProfileDirectory(hToken syscall.Handle) (string, error) {
+	lpcchSize := uint32(0)
+	err := GetUserProfileDirectory(hToken, nil, &lpcchSize)
+	// bad token?
+	if err != nil {
+		return "", err
+	}
+	u16 := make([]uint16, lpcchSize)
+	err = GetUserProfileDirectory(hToken, &u16[0], &lpcchSize)
+	// bad token?
+	if err != nil {
+		return "", err
+	}
+	return syscall.UTF16ToString(u16), nil
+}
+
 // ProfilesDirectory returns the folder where user profiles get created,
 // typically `C:\Users`
 func ProfilesDirectory() string {
 	lpcchSize := uint32(0)
-	GetProfilesDirectory(nil, &lpcchSize)
+	err := GetProfilesDirectory(nil, &lpcchSize)
+	if err != nil {
+		// this should never happen - it means Windows is corrupt!
+		panic(err)
+	}
 	u16 := make([]uint16, lpcchSize)
-	GetProfilesDirectory(&u16[0], &lpcchSize)
+	err = GetProfilesDirectory(&u16[0], &lpcchSize)
+	if err != nil {
+		// this should never happen - it means Windows is corrupt!
+		panic(err)
+	}
 	return syscall.UTF16ToString(u16)
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/bb762280(v=vs.85).aspx
+// BOOL WINAPI GetUserProfileDirectory(
+//   _In_      HANDLE  hToken,
+//   _Out_opt_ LPTSTR  lpProfileDir,
+//   _Inout_   LPDWORD lpcchSize
+// );
+func GetUserProfileDirectory(
+	hToken syscall.Handle,
+	lpProfileDir *uint16,
+	lpcchSize *uint32,
+) (err error) {
+	r1, _, e1 := procGetUserProfileDirectory.Call(
+		uintptr(hToken),
+		uintptr(unsafe.Pointer(lpProfileDir)),
+		uintptr(unsafe.Pointer(lpcchSize)),
+	)
+	if r1 == 0 {
+		err = os.NewSyscallError("GetUserProfileDirectory", e1)
+	}
+	return
 }
