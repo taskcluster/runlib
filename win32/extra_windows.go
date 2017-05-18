@@ -1082,13 +1082,9 @@ func GetProfilesDirectory(
 // the given user handle
 func ProfileDirectory(hToken syscall.Handle) (string, error) {
 	lpcchSize := uint32(0)
-	err := GetUserProfileDirectory(hToken, nil, &lpcchSize)
-	// bad token?
-	if err != nil {
-		return "", err
-	}
+	GetUserProfileDirectory(hToken, nil, &lpcchSize)
 	u16 := make([]uint16, lpcchSize)
-	err = GetUserProfileDirectory(hToken, &u16[0], &lpcchSize)
+	err := GetUserProfileDirectory(hToken, &u16[0], &lpcchSize)
 	// bad token?
 	if err != nil {
 		return "", err
@@ -1100,13 +1096,9 @@ func ProfileDirectory(hToken syscall.Handle) (string, error) {
 // typically `C:\Users`
 func ProfilesDirectory() string {
 	lpcchSize := uint32(0)
-	err := GetProfilesDirectory(nil, &lpcchSize)
-	if err != nil {
-		// this should never happen - it means Windows is corrupt!
-		panic(err)
-	}
+	GetProfilesDirectory(nil, &lpcchSize)
 	u16 := make([]uint16, lpcchSize)
-	err = GetProfilesDirectory(&u16[0], &lpcchSize)
+	err := GetProfilesDirectory(&u16[0], &lpcchSize)
 	if err != nil {
 		// this should never happen - it means Windows is corrupt!
 		panic(err)
