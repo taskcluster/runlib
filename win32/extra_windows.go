@@ -1015,11 +1015,14 @@ func InteractiveUserToken(timeout time.Duration) (hToken syscall.Handle, err err
 	deadline := time.Now().Add(timeout)
 	var sessionId uint32
 	sessionId, err = WTSGetActiveConsoleSessionId()
+	if err == nil {
+		err = WTSQueryUserToken(sessionId, &hToken)
+	}
 	for err != nil {
 		if time.Now().After(deadline) {
 			return
 		}
-		time.Sleep(time.Second)
+		time.Sleep(time.Second / 10)
 		sessionId, err = WTSGetActiveConsoleSessionId()
 		if err == nil {
 			err = WTSQueryUserToken(sessionId, &hToken)
