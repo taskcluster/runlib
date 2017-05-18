@@ -1051,6 +1051,8 @@ func GetProfilesDirectory(
 	return
 }
 
+// ProfilesDirectory returns the folder where user profiles get created,
+// typically `C:\Users`
 func ProfilesDirectory() string {
 	lpcchSize := uint32(0)
 	GetProfilesDirectory(nil, &lpcchSize)
