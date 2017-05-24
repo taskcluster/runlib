@@ -47,6 +47,7 @@ var (
 	procWTSGetActiveConsoleSessionId   = kernel32.NewProc("WTSGetActiveConsoleSessionId")
 	procGetProfilesDirectory           = userenv.NewProc("GetProfilesDirectoryW")
 	procGetUserProfileDirectory        = userenv.NewProc("GetUserProfileDirectoryW")
+	procOpenInputDesktop               = user32.NewProc("OpenInputDesktop")
 )
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd378457(v=vs.85).aspx
@@ -1124,6 +1125,32 @@ func GetUserProfileDirectory(
 	)
 	if r1 == 0 {
 		err = os.NewSyscallError("GetUserProfileDirectory", e1)
+	}
+	return
+}
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/ms684309(v=vs.85).aspx
+// HDESK WINAPI OpenInputDesktop(
+//   _In_ DWORD       dwFlags,
+//   _In_ BOOL        fInherit,
+//   _In_ ACCESS_MASK dwDesiredAccess
+// );
+func OpenInputDesktop(
+	dwFlags uint32,
+	fInherit bool,
+	dwDesiredAccess uint32,
+) (err error) {
+	inherit := uint32(0)
+	if fInherit {
+		inherit = 1
+	}
+	r1, _, e1 := procOpenInputDesktop.Call(
+		uintptr(dwFlags),
+		uintptr(inherit),
+		uintptr(dwDesiredAccess),
+	)
+	if r1 == 0 {
+		err = os.NewSyscallError("OpenInputDesktop", e1)
 	}
 	return
 }
