@@ -234,46 +234,6 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	d.platformData.hProcess = pi.Process
 	d.platformData.hThread = pi.Thread
 	d.platformData.hJob = syscall.InvalidHandle
-	fmt.Println("")
-	fmt.Println("")
-
-	desk, err := win32.GetThreadDesktop(pi.ThreadId)
-	if err != nil {
-		fmt.Println("Could not get thread desktop for thread")
-	}
-
-	var deskName string
-	if deskName, err = win32.GetUserObjectName(syscall.Handle(desk)); err != nil {
-		fmt.Println("Could not get thread desktop name")
-	}
-
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("SUBPROCESS Desktop name is " + deskName)
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-
-	interactive, err := win32.OpenInputDesktop(0, true, 0x00020000)
-	if err != nil {
-		fmt.Println("Can't get handle on interactive desktop")
-	}
-
-	var interactiveName string
-	if interactiveName, err = win32.GetUserObjectName(syscall.Handle(interactive)); err != nil {
-		fmt.Println("Could not get interactive desktop name")
-	}
-
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("INTERACTIVE Desktop name is " + interactiveName)
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("")
 
 	// Set process to run with above normal priority
 	e = win32.SetPriorityClass(d.platformData.hProcess, win32.ABOVE_NORMAL_PRIORITY_CLASS)

@@ -232,8 +232,15 @@ func boolToUint32(src bool) uint32 {
 	return 0
 }
 
-func UTF16PtrToString(ptr *uint16) string {
-	return syscall.UTF16ToString((*[1 << 15]uint16)(unsafe.Pointer(ptr))[:])
+func UintptrToString(v uintptr) string {
+	if v == 0 {
+		return ""
+	}
+	return syscall.UTF16ToString((*[1 << 29]uint16)(unsafe.Pointer(v))[0:])
+}
+
+func UTF16PtrToString(v *uint16) string {
+	return UintptrToString(uintptr(unsafe.Pointer(v)))
 }
 
 func CreateProcessAsUser(
