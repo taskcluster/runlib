@@ -1139,7 +1139,7 @@ func OpenInputDesktop(
 	dwFlags uint32,
 	fInherit bool,
 	dwDesiredAccess uint32,
-) (err error) {
+) (hDesktop syscall.Handle, err error) {
 	inherit := uint32(0)
 	if fInherit {
 		inherit = 1
@@ -1152,5 +1152,6 @@ func OpenInputDesktop(
 	if r1 == 0 {
 		err = os.NewSyscallError("OpenInputDesktop", e1)
 	}
+	hDesktop = syscall.Handle(r1)
 	return
 }
