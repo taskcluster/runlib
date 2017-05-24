@@ -1,6 +1,7 @@
 package win32
 
 import (
+	"log"
 	"os"
 	"runtime"
 	"syscall"
@@ -231,6 +232,10 @@ func boolToUint32(src bool) uint32 {
 	return 0
 }
 
+func UTF16PtrToString(ptr *uint16) string {
+	return syscall.UTF16ToString((*[1 << 15]uint16)(unsafe.Pointer(ptr))[:])
+}
+
 func CreateProcessAsUser(
 	token syscall.Handle,
 	applicationName *uint16,
@@ -243,6 +248,17 @@ func CreateProcessAsUser(
 	currentDirectory *uint16,
 	startupInfo *syscall.StartupInfo,
 	processInformation *syscall.ProcessInformation) error {
+
+	log.Printf("handle: %X", token)
+	log.Printf("application name: %q", UTF16PtrToString(applicationName))
+	log.Printf("command line: %q", UTF16PtrToString(commandLine))
+	log.Printf("proc security: %#v", *procSecurity)
+	log.Printf("thread security: %#v", *threadSecurity)
+	log.Printf("inherit handles: %v", inheritHandles)
+	log.Printf("creation flags: %X", creationFlags)
+	log.Printf("environment:\n%v", "????")
+	log.Printf("current dir: %q", UTF16PtrToString(currentDirectory))
+	log.Printf("startup info: %#v", *startupInfo)
 
 	r1, _, e1 := procCreateProcessAsUserW.Call(
 		uintptr(token),
