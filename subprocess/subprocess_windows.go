@@ -163,7 +163,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 		si.Desktop = syscall.StringToUTF16Ptr(sub.Options.Desktop)
 	}
 
-	si.Desktop = syscall.StringTOUTF16Ptr(`winsta0\default`)
+	si.Desktop = syscall.StringToUTF16Ptr(`winsta0\default`)
 
 	if sub.Login != nil {
 		var environment *uint16
