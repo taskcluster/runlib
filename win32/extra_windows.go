@@ -1095,6 +1095,9 @@ func InteractiveUserToken(timeout time.Duration) (hToken syscall.Handle, err err
 	// to avoid likely race conditions outside of this function
 	var userProfileDir string
 	userProfileDir, err = ProfileDirectory(hToken)
+	if err == nil {
+		_, err = os.Stat(userProfileDir)
+	}
 	for err != nil {
 		if time.Now().After(deadline) {
 			return
