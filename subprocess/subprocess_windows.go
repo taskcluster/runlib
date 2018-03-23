@@ -164,8 +164,9 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 	}
 
 	if sub.Login != nil {
-		var environment *uint16
+		var environment *[]string
 		environment, e = win32.CreateEnvironment(sub.Environment, sub.Login.HUser)
+		envBlock := win32.ListToEnvironmentBlock(environment)
 		if e != nil {
 			return nil, e
 		}
@@ -178,7 +179,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 				applicationName,
 				commandLine,
 				creationFlags,
-				environment,
+				envBlock,
 				currentDirectory,
 				si,
 				pi,
@@ -192,14 +193,14 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 				nil,
 				true,
 				creationFlags|win32.CREATE_NEW_PROCESS_GROUP|win32.CREATE_NEW_CONSOLE,
-				environment,
+				envBlock,
 				currentDirectory,
 				si,
 				pi,
 			)
 		}
 	} else {
-		environment := win32.ListToEnvironmentBlock(sub.Environment)
+		envBlock := win32.ListToEnvironmentBlock(sub.Environment)
 
 		e = os.NewSyscallError("CreateProcess", win32.CreateProcess(
 			applicationName,
@@ -208,7 +209,7 @@ func (sub *Subprocess) CreateFrozen() (*SubprocessData, error) {
 			nil,
 			true,
 			creationFlags|win32.CREATE_NEW_PROCESS_GROUP|win32.CREATE_NEW_CONSOLE,
-			environment,
+			envBlock,
 			currentDirectory,
 			si,
 			pi,

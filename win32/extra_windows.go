@@ -374,7 +374,7 @@ func DestroyEnvironmentBlock(
 // CreateEnvironment returns an environment block, suitable for use with the
 // CreateProcessAsUser system call. The default environment variables of hUser
 // are overlayed with values in env.
-func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, err error) {
+func CreateEnvironment(env *[]string, hUser syscall.Handle) (mergedEnv *[]string, err error) {
 	var logonEnv uintptr
 	err = CreateEnvironmentBlock(&logonEnv, hUser, false)
 	if err != nil {
@@ -392,11 +392,8 @@ func CreateEnvironment(env *[]string, hUser syscall.Handle) (envBlock *uint16, e
 		// in UTF16, each rune takes two bytes, as does the trailing uint16(0)
 		varStartOffset += uint(2 * (utf8.RuneCountInString(envVar) + 1))
 	}
-	env, err = MergeEnvLists(envList, env)
-	if err != nil {
-		return
-	}
-	return ListToEnvironmentBlock(env), nil
+	mergedEnv, err = MergeEnvLists(envList, env)
+	return
 }
 
 type envSetting struct {
